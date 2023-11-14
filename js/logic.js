@@ -13,6 +13,18 @@ const Player = {
 }
 Player.img.src = Player.src
 
+const Laser = {
+    w: 300,
+    h: 30,
+    x: 0,
+    y: 0,
+    img: new Image(),
+    src: "assets/laser.png",
+    created: 0,
+    inuse: false,
+}
+Laser.img.src = Laser.src
+
 const Baddy = {
     w: 30,
     h: 30,
@@ -59,7 +71,7 @@ let maxHeigth
 let last_baddy = 0
 let next_baddy = 0
 
-let score = 0
+let score = 200
 
 let logic_cycle
 let game_over_flag = false
@@ -83,10 +95,29 @@ function spawnBaddy() {
     Baddies.push(baddy)
 }
 
-
 function logic() {
     input_handler()
     if (score < 0) game_over()
+    if (Laser.inuse) {
+        Laser.x = Player.x +5
+        Laser.y = Player.y + Player.h / 2 - Laser.h /2
+        if (Laser.created + 10000 < Date.now()) {
+            Laser.inuse = false
+        }
+        for (let i = 0; i < Baddies.length; i++) {
+            const baddy = Baddies[i]
+            if (baddy.x < Laser.x + Laser.w && baddy.x + baddy.w > Laser.x && baddy.y < Laser.y + Laser.h && baddy.y + baddy.h > Laser.y) {
+                Baddies.splice(i,1)
+                i--
+                boom = Object.assign({}, Boom)
+                boom.x = baddy.x
+                boom.y = baddy.y
+                boom.created = Date.now()
+                Booms.push(boom)
+                score += 10
+            }
+        }
+    }
     for (let i = 0; i < Bullets.length; i++) {
         const bullet = Bullets[i]
         bullet.x += 5
@@ -121,6 +152,12 @@ function logic() {
         if (baddy.x < Player.x + Player.w && baddy.x + baddy.w > Player.x && baddy.y < Player.y + Player.h && baddy.y + baddy.h > Player.y) {
             score -= 100
             Baddies.splice(i,1)
+            boom = Object.assign({}, Boom)
+            boom.x = baddy.x
+            boom.y = baddy.y
+            boom.created = Date.now()
+            Booms.push(boom)
+            i--
         }
     }
 
@@ -141,6 +178,9 @@ function logic() {
 
 function draw() {
     ctx.clearRect(0,0,maxWidth,maxHeigth)
+    if (Laser.inuse) {
+        ctx.drawImage(Laser.img,Laser.x,Laser.y,Laser.w,Laser.h)
+    }
     ctx.drawImage(Player.img,Player.x,Player.y,Player.w,Player.h)
 
     for (let i = 0; i < Bullets.length; i++) {
@@ -182,7 +222,7 @@ function draw() {
 function input_handler() {
     if (game_over_flag) return
     for (const [key] of Object.entries(pressed_keys)) {
-        switch (key) {
+        switch (key.toLowerCase()) {
             case " ":
                 if (Player.lastShoot + Player.shoot_delay > Date.now()) return
                 bullet = Object.assign({}, Bullet)
@@ -191,28 +231,33 @@ function input_handler() {
                 Bullets.push(bullet)
                 Player.lastShoot = Date.now()
                 break
-            case "ArrowUp":
+            case "w":
                 if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.y - Player.__move_size < 0) return
+                if (Player.y - Player.__move_size < 0) break
                 Player.y -= Player.__move_size
                 break
-            case "ArrowDown":
+            case "s":
                 if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.y + Player.h + Player.__move_size > maxHeigth) return
+                if (Player.y + Player.h + Player.__move_size > maxHeigth) break
                 Player.y += Player.__move_size
                 break
-            case "ArrowLeft":
+            case "a":
                 if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.x - Player.__move_size < 0) return
+                if (Player.x - Player.__move_size < 0) break
                 Player.x -= Player.__move_size
                 break
-            case "ArrowRight":
+            case "d":
                 if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.x + Player.w + Player.__move_size > Math.floor(maxWidth/2)) return
+                if (Player.x + Player.w + Player.__move_size > Math.floor(maxWidth/2)) break
                 Player.x += Player.__move_size
                 break
+            case "q":
+                if (Laser.inuse == false && score > 100) {
+                    Laser.created = Date.now()
+                    Laser.inuse = true
+                    score -= 100
+                }
         }
-
     }
     Player.lastMove = Date.now()
 }
