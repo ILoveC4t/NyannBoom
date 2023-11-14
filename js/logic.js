@@ -4,10 +4,10 @@ const Player = {
     x: 10,
     y: 240,
     shoot_delay: 1000,
-    move_delay: 5,
-    __move_size: 10,
+    move_delay: 20,
+    __move_size: 5,
     img: new Image(),
-    src: "/assets/nyan.png",
+    src: "assets/nyan.png",
     lastMove: 0,
     lastShoot: 0,
 }
@@ -19,7 +19,7 @@ const Baddy = {
     x: 0,
     y: 0,
     img: new Image(),
-    src: "/assets/baddy.png",
+    src: "assets/baddy.png",
     lastMove: 0,
 }
 Baddy.img.src = Baddy.src
@@ -31,7 +31,7 @@ const Bullet = {
     x: 0,
     y: 0,
     img: new Image(),
-    src: "/assets/bullet.png",
+    src: "assets/bullet.png",
     lastMove: 0,
 }
 Bullet.img.src = Bullet.src
@@ -43,11 +43,13 @@ const Boom = {
     x: 0,
     y: 0,
     img: new Image(),
-    src: "/assets/boom.png",
+    src: "assets/boom.png",
     created: 0,
 }
 Boom.img.src = Boom.src
 const Booms = []
+
+const pressed_keys = {}
 
 let canvas
 let ctx
@@ -70,7 +72,6 @@ function game_over_input_handler(e) {
 
 function game_over() {
     clearInterval(logic_cycle)
-    document.removeEventListener("keydown", input_handler)
     document.addEventListener("keydown", game_over_input_handler)
     game_over_flag = true
 }
@@ -84,6 +85,7 @@ function spawnBaddy() {
 
 
 function logic() {
+    input_handler()
     if (score < 0) game_over()
     for (let i = 0; i < Bullets.length; i++) {
         const bullet = Bullets[i]
@@ -177,39 +179,55 @@ function draw() {
     requestAnimationFrame(draw)
 }
 
-function input_handler(e) {
-    if (e.key == " ") {
-        if (Player.lastShoot + Player.shoot_delay > Date.now()) return
-        bullet = Object.assign({}, Bullet)
-        bullet.x = Player.x + Player.w + 5
-        bullet.y = Player.y + Player.h/2 - bullet.h/2
-        Bullets.push(bullet)
-        Player.lastShoot = Date.now()
-    }
-    if (Player.lastMove + Player.move_delay > Date.now()) return
-    switch(e.key) {
-        case "ArrowUp":
-            if (Player.y - Player.__move_size < 0) return
-            Player.y -= Player.__move_size
-            break
-        case "ArrowDown":
-            if (Player.y + Player.h + Player.__move_size > maxHeigth) return
-            Player.y += Player.__move_size
-            break
-        case "ArrowLeft":
-            if (Player.x - Player.__move_size < 0) return
-            Player.x -= Player.__move_size
-            break
-        case "ArrowRight":
-            if (Player.x + Player.w + Player.__move_size > Math.floor(maxWidth/2)) return
-            Player.x += Player.__move_size
-            break
+function input_handler() {
+    if (game_over_flag) return
+    for (const [key] of Object.entries(pressed_keys)) {
+        switch (key) {
+            case " ":
+                if (Player.lastShoot + Player.shoot_delay > Date.now()) return
+                bullet = Object.assign({}, Bullet)
+                bullet.x = Player.x + Player.w + 5
+                bullet.y = Player.y + Player.h/2 - bullet.h/2
+                Bullets.push(bullet)
+                Player.lastShoot = Date.now()
+                break
+            case "ArrowUp":
+                if (Player.lastMove + Player.move_delay > Date.now()) return
+                if (Player.y - Player.__move_size < 0) return
+                Player.y -= Player.__move_size
+                break
+            case "ArrowDown":
+                if (Player.lastMove + Player.move_delay > Date.now()) return
+                if (Player.y + Player.h + Player.__move_size > maxHeigth) return
+                Player.y += Player.__move_size
+                break
+            case "ArrowLeft":
+                if (Player.lastMove + Player.move_delay > Date.now()) return
+                if (Player.x - Player.__move_size < 0) return
+                Player.x -= Player.__move_size
+                break
+            case "ArrowRight":
+                if (Player.lastMove + Player.move_delay > Date.now()) return
+                if (Player.x + Player.w + Player.__move_size > Math.floor(maxWidth/2)) return
+                Player.x += Player.__move_size
+                break
+        }
+
     }
     Player.lastMove = Date.now()
 }
 
+function keydown_callback(e) {
+    pressed_keys[e.key] = true
+}
+
+function keyup_callback(e) {
+    delete pressed_keys[e.key]
+}
+
 function main() {
-    document.addEventListener("keydown", input_handler)
+    document.addEventListener("keyup", keyup_callback)
+    document.addEventListener("keydown", keydown_callback)
 
     canvas = document.getElementById("game")
     ctx = canvas.getContext("2d")
