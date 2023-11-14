@@ -3,7 +3,7 @@ const Player = {
     h: 30,
     x: 10,
     y: 240,
-    shoot_delay: 1000,
+    shoot_delay: 500,
     move_delay: 20,
     __move_size: 5,
     img: new Image(),
@@ -18,6 +18,8 @@ const Laser = {
     h: 30,
     x: 0,
     y: 0,
+    duration: 3000,
+    cooldown: 5000,
     img: new Image(),
     src: "assets/laser.png",
     created: 0,
@@ -35,7 +37,7 @@ const Baddy = {
     lastMove: 0,
 }
 Baddy.img.src = Baddy.src
-const Baddies = []
+let Baddies = []
 
 const Bullet = {
     w: 40,
@@ -47,7 +49,7 @@ const Bullet = {
     lastMove: 0,
 }
 Bullet.img.src = Bullet.src
-const Bullets = []
+let Bullets = []
 
 const Boom = {
     w: 50,
@@ -59,9 +61,9 @@ const Boom = {
     created: 0,
 }
 Boom.img.src = Boom.src
-const Booms = []
+let Booms = []
 
-const pressed_keys = {}
+let pressed_keys = {}
 
 let canvas
 let ctx
@@ -71,21 +73,41 @@ let maxHeigth
 let last_baddy = 0
 let next_baddy = 0
 
-let score = 200
+let hiscore = 0
+let score = 0
 
 let logic_cycle
 let game_over_flag = false
 
+let cookies = document.getElementById("cookies")
+if (cookies) {
+    cookies = cookies.split(";")
+    if (cookies[0]) hiscore = cookies[0]
+}
+
 function game_over_input_handler(e) {
     if (e.key == " ") {
-        location.reload()
+        document.removeEventListener("keydown", game_over_input_handler)
+        game_over_flag = false
+        Player.y = maxHeigth/2
+        Player.x = 10
+        score = 0
+        main()
     }
 }
 
 function game_over() {
     clearInterval(logic_cycle)
     document.addEventListener("keydown", game_over_input_handler)
+    document.removeEventListener("keydown", keydown_callback)
+    document.removeEventListener("keyup", keyup_callback)
     game_over_flag = true
+    document.cookie = hiscore + ";"
+    pressed_keys = {}
+    Booms = []
+    Baddies = []
+    Bullets = []
+    Laser.inuse = false
 }
 
 function spawnBaddy() {
@@ -97,11 +119,15 @@ function spawnBaddy() {
 
 function logic() {
     input_handler()
-    if (score < 0) game_over()
+    if (score>hiscore) hiscore = score
+    if (score < 0) {
+        game_over()
+        return
+    }
     if (Laser.inuse) {
         Laser.x = Player.x +5
         Laser.y = Player.y + Player.h / 2 - Laser.h /2
-        if (Laser.created + 10000 < Date.now()) {
+        if (Laser.created + Laser.duration < Date.now()) {
             Laser.inuse = false
         }
         for (let i = 0; i < Baddies.length; i++) {
@@ -172,7 +198,7 @@ function logic() {
     if (last_baddy + next_baddy < Date.now()) {
         spawnBaddy()
         last_baddy = Date.now()
-        next_baddy = Math.floor(Math.random() * 2000-500-Math.floor(score)) + 500
+        next_baddy = Math.floor(Math.random() * 2000-500-score*3) + 500
     }
 }
 
@@ -202,6 +228,15 @@ function draw() {
     ctx.textAlign = "left"
     ctx.strokeText("Score: " + score, 10, 30)
 
+    ctx.textAlign = "right"
+    ctx.strokeText("Hiscore: " + hiscore, maxWidth-10, 30)
+
+    ctx.textAlign = "left"
+    let cooldown = Laser.created+Laser.cooldown-Date.now()
+    if (cooldown < 0) cooldown = 0
+    cooldown = Math.ceil(cooldown/1000)
+    ctx.strokeText("Laser CD: "+cooldown+"s", 10, maxHeigth-10)
+
     if (game_over_flag) {
         ctx.drawImage(Boom.img,Player.x-Player.h,Player.y-Player.w/2,Player.w+50,Player.w+50)
         ctx.font = "30px Arial"
@@ -214,6 +249,7 @@ function draw() {
         ctx.fillStyle = "black"
         ctx.textAlign = "center"
         ctx.fillText("Press space to restart", maxWidth/2, maxHeigth/2 + 30)
+        return
     }
 
     requestAnimationFrame(draw)
@@ -248,7 +284,7 @@ function input_handler() {
                 break
             case "d":
                 if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.x + Player.w + Player.__move_size > Math.floor(maxWidth/2)) break
+                if (Player.x + Player.w + Player.__move_size > Math.floor(maxWidth/5*4)) break
                 Player.x += Player.__move_size
                 break
             case "q":
