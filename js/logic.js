@@ -14,7 +14,7 @@ const Player = {
 Player.img.src = Player.src
 
 const Laser = {
-    w: 300,
+    w: 100,
     h: 30,
     x: 0,
     y: 0,
@@ -74,7 +74,7 @@ let last_baddy = 0
 let next_baddy = 0
 
 let hiscore = 0
-let score = 0
+let score = 100
 
 let logic_cycle
 let game_over_flag = false
@@ -125,7 +125,7 @@ function logic() {
         return
     }
     if (Laser.inuse) {
-        Laser.x = Player.x +5
+        Laser.x = Player.x + Player.w + 10
         Laser.y = Player.y + Player.h / 2 - Laser.h /2
         if (Laser.created + Laser.duration < Date.now()) {
             Laser.inuse = false
@@ -288,7 +288,7 @@ function input_handler() {
                 Player.x += Player.__move_size
                 break
             case "q":
-                if (Laser.inuse == false && score > 100) {
+                if (Laser.inuse == false && score >= 100) {
                     Laser.created = Date.now()
                     Laser.inuse = true
                     score -= 100
