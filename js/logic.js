@@ -4,8 +4,7 @@ const Player = {
     x: 10,
     y: 240,
     shoot_delay: 500,
-    move_delay: 20,
-    __move_size: 5,
+    move_speed: 250,
     img: new Image(),
     src: "assets/nyan.png",
     lastMove: 0,
@@ -74,10 +73,13 @@ let last_baddy = 0
 let next_baddy = 0
 
 let hiscore = 0
-let score = 100
+let score = 0
 
 let logic_cycle
 let game_over_flag = false
+
+let current_tick = Date.now()
+let last_tick = Date.now()
 
 let cookies = document.getElementById("cookies")
 if (cookies) {
@@ -118,6 +120,7 @@ function spawnBaddy() {
 }
 
 function logic() {
+    current_tick = Date.now()
     input_handler()
     if (score>hiscore) hiscore = score
     if (score < 0) {
@@ -200,6 +203,7 @@ function logic() {
         last_baddy = Date.now()
         next_baddy = Math.floor(Math.random() * 2000-500-score*3) + 500
     }
+    last_tick = current_tick
 }
 
 function draw() {
@@ -258,6 +262,7 @@ function draw() {
 function input_handler() {
     if (game_over_flag) return
     for (const [key] of Object.entries(pressed_keys)) {
+        move_size = Player.move_speed * ((current_tick-last_tick)/1000)
         switch (key.toLowerCase()) {
             case " ":
                 if (Player.lastShoot + Player.shoot_delay > Date.now()) return
@@ -268,27 +273,23 @@ function input_handler() {
                 Player.lastShoot = Date.now()
                 break
             case "w":
-                if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.y - Player.__move_size < 0) break
-                Player.y -= Player.__move_size
+                if (Player.y - move_size < 0) break
+                Player.y -= move_size
                 break
             case "s":
-                if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.y + Player.h + Player.__move_size > maxHeigth) break
-                Player.y += Player.__move_size
+                if (Player.y + Player.h + move_size > maxHeigth) break
+                Player.y += move_size
                 break
             case "a":
-                if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.x - Player.__move_size < 0) break
-                Player.x -= Player.__move_size
+                if (Player.x - move_size < 0) break
+                Player.x -= move_size
                 break
             case "d":
-                if (Player.lastMove + Player.move_delay > Date.now()) return
-                if (Player.x + Player.w + Player.__move_size > Math.floor(maxWidth/5*4)) break
-                Player.x += Player.__move_size
+                if (Player.x + Player.w + move_size > Math.floor(maxWidth/5*4)) break
+                Player.x += move_size
                 break
             case "q":
-                if (Laser.inuse == false && score >= 100) {
+                if (Laser.inuse == false && score > 100) {
                     Laser.created = Date.now()
                     Laser.inuse = true
                     score -= 100
