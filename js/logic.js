@@ -173,7 +173,9 @@ function game_over_input_handler(e) {
         document.removeEventListener("keydown", game_over_input_handler)
         game_over_flag = false
         score = 0
-        Player = Object.assign({}, Player)
+        Laser = Object.assign({}, Laser_Template)
+        Player = Object.assign({}, Player_Template)
+        Bullet = Object.assign({}, Bullet_Template)
         main()
     }
 }
