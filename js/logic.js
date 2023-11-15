@@ -160,7 +160,6 @@ function mouse_input_handler(e) {
         const button = Buttons[i]
         if (button.view != view) continue
         if (x > button.x && x < button.x + button.w && y > button.y && y < button.y + button.h) {
-            console.log("Clicked button: " + button.text)
             button.callback()
             last_click = Date.now()
             return
@@ -452,7 +451,6 @@ function logic() {
         if (check_collision(baddy, Player)) {
             Player.health -= baddy.dps * (time_between_ticks())
             baddy.lives -= Player.dps * (time_between_ticks())
-            console.log(baddy.lives)
             if (baddy.lives <= 0) {
                 baddy.die()
                 entities["Baddy"][1].splice(i,1)
