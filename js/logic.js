@@ -153,6 +153,90 @@ function check_collision(entity1, entity2) {
     return false
 }
 
+function input_handler() {
+    if (game_over_flag) return
+    for (const [key] of Object.entries(pressed_keys)) {
+        move_size = Player.move_speed * ((current_tick-last_tick)/1000)
+        switch (key.toLowerCase()) {
+            case " ":
+                if (Player.lastShoot + Player.shoot_delay > Date.now()) break
+                spawnBullet()
+                Player.lastShoot = Date.now()
+                break
+            case "w":
+                if (Player.y - move_size < 0) break
+                Player.y -= move_size
+                break
+            case "s":
+                if (Player.y + Player.h + move_size > maxHeigth) break
+                Player.y += move_size
+                break
+            case "a":
+                if (Player.x - move_size < 0) break
+                Player.x -= move_size
+                break
+            case "d":
+                if (Player.x + Player.w + move_size > Math.floor(maxWidth/5*4)) break
+                Player.x += move_size
+                break
+            case "q":
+                if (Laser.inuse == false && score > 100 && Laser.created + Laser.duration + Laser.cooldown < Date.now()) {
+                    Laser.created = Date.now()
+                    Laser.inuse = true
+                    score -= 100
+                }
+        }
+    }
+    Player.lastMove = Date.now()
+}
+
+function draw() {
+    ctx.clearRect(0,0,maxWidth,maxHeigth)
+    if (Laser.inuse) {
+        ctx.drawImage(Laser.img,Laser.x,Laser.y,Laser.w,Laser.h)
+    }
+    ctx.drawImage(Player.img,Player.x,Player.y,Player.w,Player.h)
+
+    for (const [entity, [entity_obj, entity_arr]] of Object.entries(entities)) {
+        for (let i = 0; i < entity_arr.length; i++) {
+            const ent = entity_arr[i]
+            ctx.drawImage(ent.img,ent.x,ent.y,ent.w,ent.h)
+        }
+    }
+
+    ctx.font = "30px Arial"
+    ctx.textAlign = "left"
+    ctx.strokeText("Score: " + score, 10, 30)
+
+    ctx.textAlign = "right"
+    ctx.strokeText("Hiscore: " + hiscore, maxWidth-10, 30)
+
+    ctx.textAlign = "left"
+    let cd = Laser.created+Laser.cooldown+Laser.duration-Date.now()
+    let cd_text = "Laser CD: "+ Math.ceil(cd/1000) + "s"
+    if (cd < 0) cd_text = "Laser Ready"
+    if (Laser.inuse) cd_text = "Laser Active"
+    if (score < 100) cd_text = "Laser requires 100 score"
+    ctx.strokeText(cd_text, 10, maxHeigth-10)
+
+    if (game_over_flag) {
+        ctx.drawImage(Boom.img,Player.x-Player.h,Player.y-Player.w/2,Player.w+50,Player.w+50)
+        ctx.font = "30px Arial"
+        ctx.fillStyle = "red"
+        ctx.textAlign = "center"
+        ctx.strokeText("Game Over", maxWidth/2, maxHeigth/2)
+        ctx.fillText("Game Over", maxWidth/2, maxHeigth/2)
+
+        ctx.font = "20px Arial"
+        ctx.fillStyle = "black"
+        ctx.textAlign = "center"
+        ctx.fillText("Press space to restart", maxWidth/2, maxHeigth/2 + 30)
+        return
+    }
+
+    requestAnimationFrame(draw)
+}
+
 function logic() {
     current_tick = Date.now()
     input_handler()
@@ -238,88 +322,6 @@ function logic() {
         next_baddy = Math.floor(Math.random() * 2000-500-score*3) + 500
     }
     last_tick = current_tick
-}
-
-function draw() {
-    ctx.clearRect(0,0,maxWidth,maxHeigth)
-    if (Laser.inuse) {
-        ctx.drawImage(Laser.img,Laser.x,Laser.y,Laser.w,Laser.h)
-    }
-    ctx.drawImage(Player.img,Player.x,Player.y,Player.w,Player.h)
-
-    for (const [entity, [entity_obj, entity_arr]] of Object.entries(entities)) {
-        for (let i = 0; i < entity_arr.length; i++) {
-            const ent = entity_arr[i]
-            ctx.drawImage(ent.img,ent.x,ent.y,ent.w,ent.h)
-        }
-    }
-
-    ctx.font = "30px Arial"
-    ctx.textAlign = "left"
-    ctx.strokeText("Score: " + score, 10, 30)
-
-    ctx.textAlign = "right"
-    ctx.strokeText("Hiscore: " + hiscore, maxWidth-10, 30)
-
-    ctx.textAlign = "left"
-    let cooldown = Laser.created+Laser.cooldown-Date.now()
-    if (cooldown < 0) cooldown = 0
-    cooldown = Math.ceil(cooldown/1000)
-    ctx.strokeText("Laser CD: "+cooldown+"s", 10, maxHeigth-10)
-
-    if (game_over_flag) {
-        ctx.drawImage(Boom.img,Player.x-Player.h,Player.y-Player.w/2,Player.w+50,Player.w+50)
-        ctx.font = "30px Arial"
-        ctx.fillStyle = "red"
-        ctx.textAlign = "center"
-        ctx.strokeText("Game Over", maxWidth/2, maxHeigth/2)
-        ctx.fillText("Game Over", maxWidth/2, maxHeigth/2)
-
-        ctx.font = "20px Arial"
-        ctx.fillStyle = "black"
-        ctx.textAlign = "center"
-        ctx.fillText("Press space to restart", maxWidth/2, maxHeigth/2 + 30)
-        return
-    }
-
-    requestAnimationFrame(draw)
-}
-
-function input_handler() {
-    if (game_over_flag) return
-    for (const [key] of Object.entries(pressed_keys)) {
-        move_size = Player.move_speed * ((current_tick-last_tick)/1000)
-        switch (key.toLowerCase()) {
-            case " ":
-                if (Player.lastShoot + Player.shoot_delay > Date.now()) break
-                spawnBullet()
-                Player.lastShoot = Date.now()
-                break
-            case "w":
-                if (Player.y - move_size < 0) break
-                Player.y -= move_size
-                break
-            case "s":
-                if (Player.y + Player.h + move_size > maxHeigth) break
-                Player.y += move_size
-                break
-            case "a":
-                if (Player.x - move_size < 0) break
-                Player.x -= move_size
-                break
-            case "d":
-                if (Player.x + Player.w + move_size > Math.floor(maxWidth/5*4)) break
-                Player.x += move_size
-                break
-            case "q":
-                if (Laser.inuse == false && score > 100) {
-                    Laser.created = Date.now()
-                    Laser.inuse = true
-                    score -= 100
-                }
-        }
-    }
-    Player.lastMove = Date.now()
 }
 
 function keydown_callback(e) {
