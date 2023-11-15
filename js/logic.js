@@ -9,7 +9,10 @@ const Player = {
     h: 30,
     x: 10,
     y: 240,
-    dps: 50,
+    regen_rate_ps: 1,
+    max_health: 100,
+    health: 100,
+    dps: 10,
     shoot_delay: 500,
     move_speed: 250,
     img: new Image(),
@@ -18,6 +21,7 @@ const Player = {
     lastShoot: 0,
 }
 Player.img.src = Player.src
+let player = Object.assign({}, Player)
 
 const Laser = {
     w: 100,
@@ -26,7 +30,7 @@ const Laser = {
     y: 0,
     duration: 3000,
     cooldown: 5000,
-    dps: 50,
+    dps: 100,
     img: new Image(),
     src: "assets/laser.png",
     created: 0,
@@ -155,9 +159,8 @@ function game_over_input_handler(e) {
     if (e.key == " ") {
         document.removeEventListener("keydown", game_over_input_handler)
         game_over_flag = false
-        Player.y = maxHeigth/2
-        Player.x = 10
         score = 0
+        player = Object.assign({}, Player)
         main()
     }
 }
@@ -178,8 +181,8 @@ function game_over() {
 
 function spawnBullet() {
     const bullet = Object.assign({}, Bullet)
-    bullet.x = Player.x + Player.w + 5
-    bullet.y = Player.y + Player.h/2 - bullet.h/2
+    bullet.x = player.x + player.w + 5
+    bullet.y = player.y + player.h/2 - bullet.h/2
     entities["Bullet"][1].push(bullet)
 }
 
@@ -213,28 +216,28 @@ function check_collision(entity1, entity2) {
 function input_handler() {
     if (game_over_flag || paused) return
     for (const [key] of Object.entries(pressed_keys)) {
-        move_size = Player.move_speed * (time_between_ticks())
+        move_size = player.move_speed * (time_between_ticks())
         switch (key.toLowerCase()) {
             case " ":
-                if (Player.lastShoot + Player.shoot_delay > Date.now()) break
+                if (player.lastShoot + player.shoot_delay > Date.now()) break
                 spawnBullet()
-                Player.lastShoot = Date.now()
+                player.lastShoot = Date.now()
                 break
             case "w":
-                if (Player.y - move_size < 0) break
-                Player.y -= move_size
+                if (player.y - move_size < 0) break
+                player.y -= move_size
                 break
             case "s":
-                if (Player.y + Player.h + move_size > maxHeigth) break
-                Player.y += move_size
+                if (player.y + player.h + move_size > maxHeigth) break
+                player.y += move_size
                 break
             case "a":
-                if (Player.x - move_size < 0) break
-                Player.x -= move_size
+                if (player.x - move_size < 0) break
+                player.x -= move_size
                 break
             case "d":
-                if (Player.x + Player.w + move_size > Math.floor(maxWidth/5*4)) break
-                Player.x += move_size
+                if (player.x + player.w + move_size > Math.floor(maxWidth/5*4)) break
+                player.x += move_size
                 break
             case "q":
                 if (Laser.inuse == false && score > 100 && Laser.created + Laser.duration + Laser.cooldown < Date.now()) {
@@ -244,7 +247,7 @@ function input_handler() {
                 }
         }
     }
-    Player.lastMove = Date.now()
+    player.lastMove = Date.now()
 }
 
 function shop_view() {
@@ -254,7 +257,7 @@ function game_view() {
     if (Laser.inuse) {
         ctx.drawImage(Laser.img,Laser.x,Laser.y,Laser.w,Laser.h)
     }
-    ctx.drawImage(Player.img,Player.x,Player.y,Player.w,Player.h)
+    ctx.drawImage(player.img,player.x,player.y,player.w,player.h)
 
     for (const [entity, [entity_obj, entity_arr]] of Object.entries(entities)) {
         for (let i = 0; i < entity_arr.length; i++) {
@@ -265,7 +268,19 @@ function game_view() {
 
     ctx.font = "30px Arial"
     ctx.textAlign = "left"
-    ctx.strokeText("Score: " + Math.floor(score), 10, 30)
+    ctx.strokeText("Score: " + Math.floor(score), 10, 70)
+    
+    ctx.fillStyle = "black"
+    ctx.fillRect(10, 10, 200, 30)
+    ctx.fillStyle = "red"
+    ctx.fillRect(12, 12, 196 * (player.health/100), 26)
+
+    ctx.font = "20px Arial"
+    ctx.fillStyle = "white"
+    ctx.textAlign = "center"
+    if (player.health < 0) player.health = 0
+    const health_text = Math.ceil(player.health) + "/" + player.max_health
+    ctx.fillText(health_text, 110, 32)
 
     ctx.textAlign = "right"
     ctx.strokeText("Hiscore: " + hiscore, maxWidth-10, 30)
@@ -279,7 +294,7 @@ function game_view() {
     ctx.strokeText(cd_text, 10, maxHeigth-10)
 
     if (game_over_flag) {
-        ctx.drawImage(Boom.img,Player.x-Player.h,Player.y-Player.w/2,Player.w+50,Player.w+50)
+        ctx.drawImage(Boom.img,player.x-player.h,player.y-player.w/2,player.w+50,player.w+50)
         ctx.font = "30px Arial"
         ctx.fillStyle = "red"
         ctx.textAlign = "center"
@@ -330,7 +345,7 @@ function logic() {
         last_tick = current_tick
         return
     }
-    if (score < 0) {
+    if (player.health <= 0) {
         game_over()
         return
     }
@@ -338,9 +353,15 @@ function logic() {
 
     input_handler()
 
+    //Player regen
+    if (player.health < player.max_health) {
+        player.health += player.regen_rate_ps * (time_between_ticks())
+        if (player.health > player.max_health) player.health = player.max_health
+    }
+
     if (Laser.inuse) {
-        Laser.x = Player.x + Player.w + 10
-        Laser.y = Player.y + Player.h / 2 - Laser.h /2
+        Laser.x = player.x + player.w + 10
+        Laser.y = player.y + player.h / 2 - Laser.h /2
         if (Laser.created + Laser.duration < Date.now()) {
             Laser.inuse = false
         }
@@ -396,10 +417,10 @@ function logic() {
             entities["Baddy"][1].splice(i,1)
             i--
         }
-        //Player collision
-        if (check_collision(baddy, Player)) {
-            score -= baddy.dps * (time_between_ticks())
-            baddy.lives -= Player.dps * (time_between_ticks())
+        //player collision
+        if (check_collision(baddy, player)) {
+            player.health -= baddy.dps * (time_between_ticks())
+            baddy.lives -= player.dps * (time_between_ticks())
             console.log(baddy.lives)
             if (baddy.lives <= 0) {
                 boom = Object.assign({}, Boom)
