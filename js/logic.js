@@ -37,18 +37,25 @@ const Laser = {
     inuse: false,
 }
 Laser.img.src = Laser.src
+let laser = Object.assign({}, Laser)
 
 const Baddy = {
     w: 30,
     h: 30,
     x: 0,
     y: 0,
+    score: 10,
     lives: 10,
     dps: 100,
     move_speed: 100,
     img: new Image(),
     src: "assets/baddy.png",
     lastMove: 0,
+    die: function() {
+        wh = this.w * (Boom.w/Baddy.w)
+        spawnBoom(this.x, this.y, wh, wh)
+        add_score(this.score)
+    }
 }
 Baddy.img.src = Baddy.src
 
@@ -113,6 +120,7 @@ let next_baddy = 0
 
 let hiscore = 0
 let score = 0
+let score_multiplier = 1
 
 let paused = false
 let logic_cycle
@@ -176,7 +184,7 @@ function game_over() {
     for (let [entity] of Object.entries(entities)) {
         entities[entity][1] = []
     }
-    Laser.inuse = false
+    laser.inuse = false
 }
 
 function spawnBullet() {
@@ -240,9 +248,9 @@ function input_handler() {
                 player.x += move_size
                 break
             case "q":
-                if (Laser.inuse == false && score > 100 && Laser.created + Laser.duration + Laser.cooldown < Date.now()) {
-                    Laser.created = Date.now()
-                    Laser.inuse = true
+                if (laser.inuse == false && score > 100 && laser.created + laser.duration + laser.cooldown < Date.now()) {
+                    laser.created = Date.now()
+                    laser.inuse = true
                     score -= 100
                 }
         }
@@ -254,8 +262,8 @@ function shop_view() {
 }
 
 function game_view() {
-    if (Laser.inuse) {
-        ctx.drawImage(Laser.img,Laser.x,Laser.y,Laser.w,Laser.h)
+    if (laser.inuse) {
+        ctx.drawImage(laser.img,laser.x,laser.y,laser.w,laser.h)
     }
     ctx.drawImage(player.img,player.x,player.y,player.w,player.h)
 
@@ -286,11 +294,11 @@ function game_view() {
     ctx.strokeText("Hiscore: " + hiscore, maxWidth-10, 30)
 
     ctx.textAlign = "left"
-    let cd = Laser.created+Laser.cooldown+Laser.duration-Date.now()
-    let cd_text = "Laser CD: "+ Math.ceil(cd/1000) + "s"
-    if (cd < 0) cd_text = "Laser Ready"
-    if (Laser.inuse) cd_text = "Laser Active"
-    if (score < 100) cd_text = "Laser requires 100 score"
+    let cd = laser.created+laser.cooldown+laser.duration-Date.now()
+    let cd_text = "laser CD: "+ Math.ceil(cd/1000) + "s"
+    if (cd < 0) cd_text = "laser Ready"
+    if (laser.inuse) cd_text = "laser Active"
+    if (score < 100) cd_text = "laser requires 100 score"
     ctx.strokeText(cd_text, 10, maxHeigth-10)
 
     if (game_over_flag) {
@@ -338,6 +346,10 @@ function draw() {
     requestAnimationFrame(draw)
 }
 
+function add_score(amount) {
+    score += amount*score_multiplier
+}
+
 function logic() {
     current_tick = Date.now()
 
@@ -359,26 +371,21 @@ function logic() {
         if (player.health > player.max_health) player.health = player.max_health
     }
 
-    if (Laser.inuse) {
-        Laser.x = player.x + player.w + 10
-        Laser.y = player.y + player.h / 2 - Laser.h /2
-        if (Laser.created + Laser.duration < Date.now()) {
-            Laser.inuse = false
+    if (laser.inuse) {
+        laser.x = player.x + player.w + 10
+        laser.y = player.y + player.h / 2 - laser.h /2
+        if (laser.created + laser.duration < Date.now()) {
+            laser.inuse = false
         }
         for (let i = 0; i < entities["Baddy"][1].length; i++) {
             const baddy = entities["Baddy"][1][i]
-            //Laser collision
-            if (check_collision(baddy, Laser)) {
-                baddy.lives -= Laser.dps * (time_between_ticks())
+            //laser collision
+            if (check_collision(baddy, laser)) {
+                baddy.lives -= laser.dps * (time_between_ticks())
                 if (baddy.lives <= 0) {
+                    baddy.die()
                     entities["Baddy"][1].splice(i,1)
                     i--
-                    boom = Object.assign({}, Boom)
-                    boom.x = baddy.x
-                    boom.y = baddy.y
-                    boom.created = Date.now()
-                    entities["Boom"][1].push(boom)
-                    score += 10
                 }
             }
         }
@@ -397,12 +404,10 @@ function logic() {
                 entities["Bullet"][1].splice(i,1)
                 i--
                 baddy.lives -= bullet.dps
-                if (baddy.lives <= 0) {                    
+                if (baddy.lives <= 0) {
+                    baddy.die()             
                     entities["Baddy"][1].splice(j,1)
                     j--
-                    wh = baddy.w * (Boom.w/Baddy.w)
-                    spawnBoom(baddy.x, baddy.y, wh, wh)
-                    score += 10
                 }
             }
         }
@@ -413,7 +418,7 @@ function logic() {
         //Movement
         baddy.x -= baddy.move_speed * (time_between_ticks())
         //Offscreen check
-        if (baddy.x < 0) {
+        if (baddy.x + baddy.w < 0) {
             entities["Baddy"][1].splice(i,1)
             i--
         }
@@ -423,12 +428,7 @@ function logic() {
             baddy.lives -= player.dps * (time_between_ticks())
             console.log(baddy.lives)
             if (baddy.lives <= 0) {
-                boom = Object.assign({}, Boom)
-                boom.x = baddy.x
-                boom.y = baddy.y
-                boom.created = Date.now()
-                entities["Boom"][1].push(boom)
-
+                baddy.die()
                 entities["Baddy"][1].splice(i,1)
                 i--
             }
