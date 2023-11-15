@@ -63,6 +63,12 @@ const Boom = {
 Boom.img.src = Boom.src
 let Booms = []
 
+const entities = {
+    "Baddy": [Baddy, Baddies],
+    "Bullet": [Bullet, Bullets],
+    "Boom": [Boom, Booms],
+}
+
 let pressed_keys = {}
 
 let canvas
@@ -107,10 +113,17 @@ function game_over() {
     game_over_flag = true
     document.cookie = hiscore + ";"
     pressed_keys = {}
-    Booms = []
-    Baddies = []
-    Bullets = []
+    for (let [entity, [entity_obj, entity_arr]] of Object.entries(entities)) {
+        entity_arr = []
+    }
     Laser.inuse = false
+}
+
+function spawnBullet() {
+    const bullet = Object.assign({}, Bullet)
+    bullet.x = Player.x + Player.w + 5
+    bullet.y = Player.y + Player.h/2 - bullet.h/2
+    Bullets.push(bullet)
 }
 
 function spawnBaddy() {
@@ -119,6 +132,7 @@ function spawnBaddy() {
     baddy.h = baddy.w
     baddy.x = maxWidth - baddy.w
     baddy.y = Math.floor(Math.random() * (maxHeigth - baddy.h))
+    baddy.move_speed = baddy.move_speed * ((Math.random())+0.5)
     Baddies.push(baddy)
 }
 
@@ -233,19 +247,11 @@ function draw() {
     }
     ctx.drawImage(Player.img,Player.x,Player.y,Player.w,Player.h)
 
-    for (let i = 0; i < Bullets.length; i++) {
-        const bullet = Bullets[i]
-        ctx.drawImage(bullet.img,bullet.x,bullet.y,bullet.w,bullet.h)
-    }
-
-    for (let i = 0; i < Baddies.length; i++) {
-        const baddy = Baddies[i]
-        ctx.drawImage(baddy.img,baddy.x,baddy.y,baddy.w,baddy.h)
-    }
-
-    for (let i = 0; i < Booms.length; i++) {
-        const boom = Booms[i]
-        ctx.drawImage(boom.img,boom.x,boom.y,boom.w,boom.h)
+    for (const [entity, [entity_obj, entity_arr]] of Object.entries(entities)) {
+        for (let i = 0; i < entity_arr.length; i++) {
+            const ent = entity_arr[i]
+            ctx.drawImage(ent.img,ent.x,ent.y,ent.w,ent.h)
+        }
     }
 
     ctx.font = "30px Arial"
@@ -285,11 +291,8 @@ function input_handler() {
         move_size = Player.move_speed * ((current_tick-last_tick)/1000)
         switch (key.toLowerCase()) {
             case " ":
-                if (Player.lastShoot + Player.shoot_delay > Date.now()) return
-                bullet = Object.assign({}, Bullet)
-                bullet.x = Player.x + Player.w + 5
-                bullet.y = Player.y + Player.h/2 - bullet.h/2
-                Bullets.push(bullet)
+                if (Player.lastShoot + Player.shoot_delay > Date.now()) break
+                spawnBullet()
                 Player.lastShoot = Date.now()
                 break
             case "w":
