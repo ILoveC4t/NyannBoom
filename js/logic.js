@@ -10,6 +10,7 @@ const Player = {
     h: 30,
     x: 10,
     y: 240,
+    dps: 50,
     shoot_delay: 500,
     move_speed: 250,
     img: new Image(),
@@ -26,6 +27,7 @@ const Laser = {
     y: 0,
     duration: 3000,
     cooldown: 5000,
+    dps: 50,
     img: new Image(),
     src: "assets/laser.png",
     created: 0,
@@ -38,6 +40,8 @@ const Baddy = {
     h: 30,
     x: 0,
     y: 0,
+    lives: 10,
+    dps: 100,
     move_speed: 100,
     img: new Image(),
     src: "assets/baddy.png",
@@ -50,6 +54,7 @@ const Bullet = {
     h: 20,
     x: 0,
     y: 0,
+    dps: 50,
     img: new Image(),
     src: "assets/bullet.png",
     lastMove: 0,
@@ -112,6 +117,9 @@ let game_over_flag = false
 
 let current_tick = Date.now()
 let last_tick = Date.now()
+function time_between_ticks() {
+    return (current_tick-last_tick)/1000
+}
 
 let cookies = document.getElementById("cookies")
 if (cookies) {
@@ -206,7 +214,7 @@ function check_collision(entity1, entity2) {
 function input_handler() {
     if (game_over_flag || paused) return
     for (const [key] of Object.entries(pressed_keys)) {
-        move_size = Player.move_speed * ((current_tick-last_tick)/1000)
+        move_size = Player.move_speed * (time_between_ticks())
         switch (key.toLowerCase()) {
             case " ":
                 if (Player.lastShoot + Player.shoot_delay > Date.now()) break
@@ -258,7 +266,7 @@ function game_view() {
 
     ctx.font = "30px Arial"
     ctx.textAlign = "left"
-    ctx.strokeText("Score: " + score, 10, 30)
+    ctx.strokeText("Score: " + Math.floor(score), 10, 30)
 
     ctx.textAlign = "right"
     ctx.strokeText("Hiscore: " + hiscore, maxWidth-10, 30)
@@ -301,6 +309,7 @@ function draw() {
             break
     }
 
+    if (game_over_flag) return
     for (let i = 0; i < Buttons.length; i++) {
         const button = Buttons[i]
         if (button.view != view) continue
@@ -326,7 +335,7 @@ function logic() {
         game_over()
         return
     }
-    if (score>hiscore) hiscore = score
+    if (score>hiscore) hiscore = Math.floor(score)
 
     input_handler()
 
@@ -338,15 +347,19 @@ function logic() {
         }
         for (let i = 0; i < entities["Baddy"][1].length; i++) {
             const baddy = entities["Baddy"][1][i]
+            //Laser collision
             if (check_collision(baddy, Laser)) {
-                entities["Baddy"][1].splice(i,1)
-                i--
-                boom = Object.assign({}, Boom)
-                boom.x = baddy.x
-                boom.y = baddy.y
-                boom.created = Date.now()
-                entities["Boom"][1].push(boom)
-                score += 10
+                baddy.lives -= Laser.dps * (time_between_ticks())
+                if (baddy.lives <= 0) {
+                    entities["Baddy"][1].splice(i,1)
+                    i--
+                    boom = Object.assign({}, Boom)
+                    boom.x = baddy.x
+                    boom.y = baddy.y
+                    boom.created = Date.now()
+                    entities["Boom"][1].push(boom)
+                    score += 10
+                }
             }
         }
     }
@@ -359,14 +372,18 @@ function logic() {
         }
         for (let j = 0; j < entities["Baddy"][1].length; j++) {
             const baddy = entities["Baddy"][1][j]
+            //Bullet collision
             if (check_collision(baddy, bullet)) {
                 entities["Bullet"][1].splice(i,1)
                 i--
-                entities["Baddy"][1].splice(j,1)
-                j--
-                wh = baddy.w * (Boom.w/Baddy.w)
-                spawnBoom(baddy.x, baddy.y, wh, wh)
-                score += 10
+                baddy.lives -= bullet.dps
+                if (baddy.lives <= 0) {                    
+                    entities["Baddy"][1].splice(j,1)
+                    j--
+                    wh = baddy.w * (Boom.w/Baddy.w)
+                    spawnBoom(baddy.x, baddy.y, wh, wh)
+                    score += 10
+                }
             }
         }
     }
@@ -374,22 +391,27 @@ function logic() {
     for (let i = 0; i < entities["Baddy"][1].length; i++) {
         const baddy = entities["Baddy"][1][i]
         //Movement
-        baddy.x -= baddy.move_speed * ((current_tick-last_tick)/1000)
+        baddy.x -= baddy.move_speed * (time_between_ticks())
         //Offscreen check
         if (baddy.x < 0) {
             entities["Baddy"][1].splice(i,1)
             i--
         }
+        //Player collision
         if (check_collision(baddy, Player)) {
-            score -= 100
-            entities["Baddy"][1].splice(i,1)
-            boom = Object.assign({}, Boom)
-            boom.x = baddy.x
-            boom.y = baddy.y
-            
-            boom.created = Date.now()
-            entities["Boom"][1].push(boom)
-            i--
+            score -= baddy.dps * (time_between_ticks())
+            baddy.lives -= Player.dps * (time_between_ticks())
+            console.log(baddy.lives)
+            if (baddy.lives <= 0) {
+                boom = Object.assign({}, Boom)
+                boom.x = baddy.x
+                boom.y = baddy.y
+                boom.created = Date.now()
+                entities["Boom"][1].push(boom)
+
+                entities["Baddy"][1].splice(i,1)
+                i--
+            }
         }
     }
 
