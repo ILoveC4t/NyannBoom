@@ -31,6 +31,7 @@ const Baddy = {
     h: 30,
     x: 0,
     y: 0,
+    move_speed: 100,
     img: new Image(),
     src: "assets/baddy.png",
     lastMove: 0,
@@ -114,9 +115,28 @@ function game_over() {
 
 function spawnBaddy() {
     const baddy = Object.assign({}, Baddy)
+    baddy.w = baddy.w * ((Math.random())+0.8)
+    baddy.h = baddy.w
     baddy.x = maxWidth - baddy.w
     baddy.y = Math.floor(Math.random() * (maxHeigth - baddy.h))
     Baddies.push(baddy)
+}
+
+function spawnBoom(x,y,w,h) {
+    boom = Object.assign({}, Boom)
+    boom.x = x
+    boom.y = y
+    boom.w = w
+    boom.h = h
+    boom.created = Date.now()
+    Booms.push(boom)
+}
+
+function check_collision(entity1, entity2) {
+    if (entity1.x < entity2.x + entity2.w && entity1.x + entity1.w > entity2.x && entity1.y < entity2.y + entity2.h && entity1.y + entity1.h > entity2.y) {
+        return true
+    }
+    return false
 }
 
 function logic() {
@@ -135,7 +155,7 @@ function logic() {
         }
         for (let i = 0; i < Baddies.length; i++) {
             const baddy = Baddies[i]
-            if (baddy.x < Laser.x + Laser.w && baddy.x + baddy.w > Laser.x && baddy.y < Laser.y + Laser.h && baddy.y + baddy.h > Laser.y) {
+            if (check_collision(baddy, Laser)) {
                 Baddies.splice(i,1)
                 i--
                 boom = Object.assign({}, Boom)
@@ -156,16 +176,13 @@ function logic() {
         }
         for (let j = 0; j < Baddies.length; j++) {
             const baddy = Baddies[j]
-            if (baddy.x < bullet.x + bullet.w && baddy.x + baddy.w > bullet.x && baddy.y < bullet.y + bullet.h && baddy.y + baddy.h > bullet.y) {
+            if (check_collision(baddy, bullet)) {
                 Bullets.splice(i,1)
                 i--
                 Baddies.splice(j,1)
                 j--
-                boom = Object.assign({}, Boom)
-                boom.x = baddy.x
-                boom.y = baddy.y
-                boom.created = Date.now()
-                Booms.push(boom)
+                wh = baddy.w * (Boom.w/Baddy.w)
+                spawnBoom(baddy.x, baddy.y, wh, wh)
                 score += 10
             }
         }
@@ -173,17 +190,20 @@ function logic() {
 
     for (let i = 0; i < Baddies.length; i++) {
         const baddy = Baddies[i]
-        baddy.x -= 2
+        //Movement
+        baddy.x -= baddy.move_speed * ((current_tick-last_tick)/1000)
+        //Offscreen check
         if (baddy.x < 0) {
             Baddies.splice(i,1)
             i--
         }
-        if (baddy.x < Player.x + Player.w && baddy.x + baddy.w > Player.x && baddy.y < Player.y + Player.h && baddy.y + baddy.h > Player.y) {
+        if (check_collision(baddy, Player)) {
             score -= 100
             Baddies.splice(i,1)
             boom = Object.assign({}, Boom)
             boom.x = baddy.x
             boom.y = baddy.y
+            
             boom.created = Date.now()
             Booms.push(boom)
             i--
