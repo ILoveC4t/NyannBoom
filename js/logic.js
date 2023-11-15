@@ -3,7 +3,6 @@ game_bg_img.src = "assets/game_bg.png"
 
 const shop_bg_img = new Image()
 shop_bg_img.src = "assets/shop_bg.png"
-shop_bg_img.style.filter = "blur(8000Px)"
 
 const Player = {
     w: 90,
