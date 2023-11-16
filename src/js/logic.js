@@ -13,11 +13,15 @@ const gd = {
     maxWidth: null,
     maxHeigth: null,
 
-    Player: get_object("Player"),
-    Laser: get_object("Laser"),
-    Baddy: get_object("Baddy"),
-    Bullet: get_object("Bullet"),
-    Boom: get_object("Boom"),
+    Player: get_object("Player", this),
+    Laser: get_object("Laser", this),
+    Baddy: get_object("Baddy", this),
+    Bullet: get_object("Bullet", this),
+    Boom: get_object("Boom", this),
+
+    enemies: [
+        "Baddy",
+    ],
 
     entities: {
         "Baddy": [],
@@ -52,13 +56,13 @@ const gd = {
 
     paused: false,
     game_over_flag: false,
-}
 
-let logic_cycle
-let current_tick = Date.now()
-let last_tick = Date.now()
-function time_between_ticks() {
-    return (current_tick-last_tick)/1000
+    logic_cycle: null,
+    current_tick: Date.now(),
+    last_tick: Date.now(),
+    time_between_ticks: function() {
+        return (gd.current_tick-gd.last_tick)/1000
+    },
 }
 
 let cookies = document.getElementById("cookies")
@@ -96,15 +100,15 @@ function game_over_input_handler(e) {
         document.removeEventListener("keydown", game_over_input_handler)
         gd.game_over_flag = false
         gd.score = 0
-        gd.Laser = get_object("Laser")
-        gd.Player = get_object("Player")
-        gd.Bullet = get_object("Bullet")
+        gd.Laser = get_object("Laser", gd)
+        gd.Player = get_object("Player", gd)
+        gd.Bullet = get_object("Bullet", gd)
         main()
     }
 }
 
 function game_over() {
-    clearInterval(logic_cycle)
+    clearInterval(gd.logic_cycle)
     document.addEventListener("keydown", game_over_input_handler)
     document.removeEventListener("keydown", keydown_callback)
     document.removeEventListener("keyup", keyup_callback)
@@ -117,15 +121,8 @@ function game_over() {
     gd.Laser.inuse = false
 }
 
-function spawnBullet() {
-    const bullet = Object.assign({}, gd.Bullet)
-    bullet.x = gd.Player.x + gd.Player.w + 5
-    bullet.y = gd.Player.y + gd.Player.h/2 - bullet.h/2
-    gd.entities["Bullet"].push(bullet)
-}
-
 function spawnBaddy() {
-    const baddy = get_object("Baddy")
+    const baddy = get_object("Baddy", gd)
     baddy.w = baddy.w * ((Math.random())+0.8)
     baddy.h = baddy.w
     baddy.x = gd.maxWidth - baddy.w
@@ -135,7 +132,7 @@ function spawnBaddy() {
 }
 
 function spawnBoom(x,y,w,h) {
-    boom = get_object("Boom")
+    boom = get_object("Boom", gd)
     boom.x = x
     boom.y = y
     boom.w = w
@@ -152,29 +149,7 @@ function check_collision(entity1, entity2) {
 }
 
 function input_handler() {
-    if (gd.game_over_flag || gd.paused) return
-    for (const [key] of Object.entries(gd.pressed_keys)) {
-        move_size = gd.Player.move_speed * (time_between_ticks())
-        switch (key.toLowerCase()) {
-            case " ":
-                if (gd.Player.lastShoot + gd.Player.shoot_delay > Date.now()) break
-                spawnBullet()
-                gd.Player.lastShoot = Date.now()
-                break
-            case "w":
-                if (gd.Player.y - move_size < 0) break
-                gd.Player.y -= move_size
-                break
-            case "s":
-                if (gd.Player.y + gd.Player.h + move_size > gd.maxHeigth) break
-                gd.Player.y += move_size
-                break
-        }
-    }
-}
-
-function input_handler() {
-    const move_size = gd.Player.move_speed * (time_between_ticks())
+    const move_size = gd.Player.move_speed * (gd.time_between_ticks())
     for (const key in gd.pressed_keys) {
         switch (key) {
             case "w":
@@ -200,9 +175,7 @@ function input_handler() {
                     gd.score -= 100
                 }
             case " ":
-                if (gd.Player.lastShoot + gd.Player.shoot_delay > Date.now()) break
-                spawnBullet()
-                gd.Player.lastShoot = Date.now()
+                gd.Player.shoot()
                 break
         }
     }
@@ -242,10 +215,10 @@ function add_score(amount) {
 }
 
 function logic() {
-    current_tick = Date.now()
+    gd.current_tick = Date.now()
 
     if (gd.paused) {
-        last_tick = current_tick
+        gd.last_tick = gd.current_tick
         return
     }
     if (gd.Player.health <= 0) {
@@ -258,7 +231,7 @@ function logic() {
 
     //Player regen
     if (gd.Player.health < gd.Player.max_health) {
-        gd.Player.health += gd.Player.regen_rate_ps * (time_between_ticks())
+        gd.Player.health += gd.Player.regen_rate_ps * (gd.time_between_ticks())
         if (gd.Player.health > gd.Player.max_health) gd.Player.health = gd.Player.max_health
     }
 
@@ -268,6 +241,9 @@ function logic() {
         if (gd.Laser.created + gd.Laser.duration < Date.now()) {
             gd.Laser.inuse = false
         }
+        const collisions = gd.Laser.check_collisions()
+
+        /*
         for (let i = 0; i < gd.entities["Baddy"].length; i++) {
             const baddy = gd.entities["Baddy"][i]
             //Laser collision
@@ -276,12 +252,12 @@ function logic() {
                 if (baddy.lives <= 0) {
                     wh = baddy.w * (gd.Boom.w/gd.Baddy.w)
                     spawnBoom(baddy.x, baddy.y, wh, wh)
-                    add_score(baddy.score)()
+                    add_score(baddy.score)
                     gd.entities["Baddy"].splice(i,1)
                     i--
                 }
             }
-        }
+        }*/
     }
     for (let i = 0; i < gd.entities["Bullet"].length; i++) {
         const bullet = gd.entities["Bullet"][i]
@@ -311,7 +287,7 @@ function logic() {
     for (let i = 0; i < gd.entities["Baddy"].length; i++) {
         const baddy = gd.entities["Baddy"][i]
         //Movement
-        baddy.x -= baddy.move_speed * (time_between_ticks())
+        baddy.x -= baddy.move_speed * (gd.time_between_ticks())
         //Offscreen check
         if (baddy.x + baddy.w < 0) {
             gd.entities["Baddy"].splice(i,1)
@@ -319,12 +295,12 @@ function logic() {
         }
         //Player collision
         if (check_collision(baddy, gd.Player)) {
-            gd.Player.health -= baddy.dps * (time_between_ticks())
-            baddy.lives -= gd.Player.dps * (time_between_ticks())
+            gd.Player.health -= baddy.dps * (gd.time_between_ticks())
+            baddy.lives -= gd.Player.dps * (gd.time_between_ticks())
             if (baddy.lives <= 0) {
                 wh = baddy.w * (gd.Boom.w/gd.Baddy.w)
                     spawnBoom(baddy.x, baddy.y, wh, wh)
-                    add_score(baddy.score)()
+                    add_score(baddy.score)
                 gd.entities["Baddy"].splice(i,1)
                 i--
             }
@@ -344,7 +320,7 @@ function logic() {
         gd.last_baddy = Date.now()
         gd.next_baddy = Math.floor(Math.random() * 2000-500-gd.score*3) + 500
     }
-    last_tick = current_tick
+    gd.last_tick = gd.current_tick
 }
 
 function keydown_callback(e) {
@@ -471,6 +447,6 @@ function main() {
     setup_buttons()
 
     draw()
-    logic_cycle = setInterval(logic, 1000/60)
+    gd.logic_cycle = setInterval(logic, 1000/60)
 }
 window.main = main
