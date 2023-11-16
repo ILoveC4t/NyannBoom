@@ -1,5 +1,3 @@
-console.log("logic.js loaded")
-
 const get_object = require("./objects.js")
 
 const shop_view = require("./views/shop.js")
@@ -177,7 +175,6 @@ function input_handler() {
 
 function input_handler() {
     const move_size = gd.Player.move_speed * (time_between_ticks())
-    console.log(move_size)
     for (const key in gd.pressed_keys) {
         switch (key) {
             case "w":
@@ -202,6 +199,11 @@ function input_handler() {
                     gd.Laser.inuse = true
                     gd.score -= 100
                 }
+            case " ":
+                if (gd.Player.lastShoot + gd.Player.shoot_delay > Date.now()) break
+                spawnBullet()
+                gd.Player.lastShoot = Date.now()
+                break
         }
     }
     gd.Player.lastMove = Date.now()
@@ -240,10 +242,10 @@ function add_score(amount) {
 }
 
 function logic() {
-    gd.current_tick = Date.now()
+    current_tick = Date.now()
 
     if (gd.paused) {
-        gd.last_tick = gd.current_tick
+        last_tick = current_tick
         return
     }
     if (gd.Player.health <= 0) {
@@ -342,7 +344,7 @@ function logic() {
         gd.last_baddy = Date.now()
         gd.next_baddy = Math.floor(Math.random() * 2000-500-gd.score*3) + 500
     }
-    gd.last_tick = gd.current_tick
+    last_tick = current_tick
 }
 
 function keydown_callback(e) {
