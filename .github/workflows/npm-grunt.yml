@@ -27,3 +27,17 @@ jobs:
       run: |
         npm install
         grunt
+        
+    - name: Zip
+      uses: montudor/action-zip@v1
+      with:
+        args: zip -qq -r release.zip dest
+
+    - name: Upload release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: release.zip
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "Autmatic Build"
