@@ -18,7 +18,7 @@ module.exports = function(grunt) {
       'using-cwd': {
         cwd: 'dest/',
         src: ['dest/**'],
-        dest: 'zip/dest.zip'
+        dest: 'dest/zip/dest.zip'
       }
     }
   });
