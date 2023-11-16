@@ -3,7 +3,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     browserify: {
       client: {
-        src: ['src/js/**.js'],
+        src: ['src/js/logic.js'],
         dest: 'dest/js/bundle.js',
       }
     },
