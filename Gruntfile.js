@@ -15,7 +15,7 @@ module.exports = function(grunt) {
       },
     },
     zip: {
-      'dest.zip': ['dest/**', '!dest'],
+      'dest/zip/dest.zip': ['dest/**', '!dest'],
     }
   });
 
