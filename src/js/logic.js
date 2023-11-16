@@ -1,91 +1,16 @@
+const {get_object} = require("./objects.js")
+
 const game_bg_img = new Image()
 game_bg_img.src = "assets/game_bg.png"
 
 const shop_bg_img = new Image()
 shop_bg_img.src = "assets/shop_bg.png"
 
-const Player_Template = {
-    w: 90,
-    h: 30,
-    x: 10,
-    y: 240,
-    upgrade_cost: 20,
-    score_multiplier: 1,
-    regen_rate_ps: 1,
-    max_health: 100,
-    health: 100,
-    dps: 10,
-    shoot_delay: 500,
-    move_speed: 250,
-    img: new Image(),
-    src: "assets/nyan.png",
-    lastMove: 0,
-    lastShoot: 0,
-}
-Player_Template.img.src = Player_Template.src
-let Player = Object.assign({}, Player_Template)
-
-const Laser_Template = {
-    w: 100,
-    h: 30,
-    x: 0,
-    y: 0,
-    duration: 3000,
-    cooldown: 5000,
-    dps: 100,
-    img: new Image(),
-    src: "assets/Laser.png",
-    created: 0,
-    inuse: false,
-}
-Laser_Template.img.src = Laser_Template.src
-let Laser = Object.assign({}, Laser_Template)
-
-const Baddy_Template = {
-    w: 30,
-    h: 30,
-    x: 0,
-    y: 0,
-    score: 10,
-    lives: 10,
-    dps: 100,
-    move_speed: 100,
-    img: new Image(),
-    src: "assets/baddy.png",
-    lastMove: 0,
-    die: function() {
-        wh = this.w * (Boom.w/Baddy.w)
-        spawnBoom(this.x, this.y, wh, wh)
-        add_score(this.score)
-    }
-}
-Baddy_Template.img.src = Baddy_Template.src
-let Baddy = Object.assign({}, Baddy_Template)
-
-const Bullet_Template = {
-    w: 40,
-    h: 20,
-    x: 0,
-    y: 0,
-    dps: 50,
-    img: new Image(),
-    src: "assets/bullet.png",
-    lastMove: 0,
-}
-Bullet_Template.img.src = Bullet_Template.src
-let Bullet = Object.assign({}, Bullet_Template)
-
-const Boom_Template = {
-    w: 50,
-    h: 50,
-    x: 0,
-    y: 0,
-    img: new Image(),
-    src: "assets/boom.png",
-    created: 0,
-}
-Boom_Template.img.src = Boom_Template.src
-let Boom = Object.assign({}, Boom_Template)
+let Player = get_object("Player")
+let Laser = get_object("Laser")
+let Baddy = get_object("Baddy")
+let Bullet = get_object("Bullet")
+let Boom = get_object("Boom")
 
 const entities = {
     "Baddy": [Baddy, []],
@@ -173,9 +98,9 @@ function game_over_input_handler(e) {
         document.removeEventListener("keydown", game_over_input_handler)
         game_over_flag = false
         score = 0
-        Laser = Object.assign({}, Laser_Template)
-        Player = Object.assign({}, Player_Template)
-        Bullet = Object.assign({}, Bullet_Template)
+        Laser = get_object("Laser")
+        Player = get_object("Player")
+        Bullet = get_object("Bullet")
         main()
     }
 }
@@ -202,7 +127,7 @@ function spawnBullet() {
 }
 
 function spawnBaddy() {
-    const baddy = Object.assign({}, Baddy)
+    const baddy = get_object("Baddy")
     baddy.w = baddy.w * ((Math.random())+0.8)
     baddy.h = baddy.w
     baddy.x = maxWidth - baddy.w
@@ -212,7 +137,7 @@ function spawnBaddy() {
 }
 
 function spawnBoom(x,y,w,h) {
-    boom = Object.assign({}, Boom)
+    boom = get_object("Boom")
     boom.x = x
     boom.y = y
     boom.w = w
