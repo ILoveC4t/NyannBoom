@@ -603,3 +603,4 @@ function main() {
     draw()
     logic_cycle = setInterval(logic, 1000/60)
 }
+window.main = main

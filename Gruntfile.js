@@ -4,7 +4,7 @@ module.exports = function(grunt) {
     browserify: {
       client: {
         src: ['src/js/**.js'],
-        dest: 'dest/js/bundle.js'
+        dest: 'dest/js/bundle.js',
       }
     },
     copy: {
@@ -15,7 +15,7 @@ module.exports = function(grunt) {
       },
     },
     zip: {
-      'dest/zip/dest.zip': ['dest/**']
+      'dest.zip': ['dest/**', '!dest'],
     }
   });
 
