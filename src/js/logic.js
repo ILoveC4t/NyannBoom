@@ -175,6 +175,7 @@ function input_handler() {
 
 function input_handler() {
     const move_size = gd.Player.move_speed * (time_between_ticks())
+    console.log(move_size)
     for (const key in gd.pressed_keys) {
         switch (key) {
             case "w":
