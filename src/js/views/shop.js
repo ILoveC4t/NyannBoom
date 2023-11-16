@@ -14,8 +14,8 @@ function render(gd) {
 
     gd.ctx.textAlign = "left"
     gd.ctx.font = "30px Arial"
-    gd.ctx.fillText("Score: " + Math.floor(score), 10, 40)
-    gd.ctx.strokeText("Score: " + Math.floor(score), 10, 40)
+    gd.ctx.fillText("Score: " + Math.floor(gd.score), 10, 40)
+    gd.ctx.strokeText("Score: " + Math.floor(gd.score), 10, 40)
 }
 
 module.exports = { render, bg_img }
