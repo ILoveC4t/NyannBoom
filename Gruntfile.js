@@ -3,7 +3,7 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
     browserify: {
       client: {
-        src: ['/src/js/**.js'],
+        src: ['src/js/**.js'],
         dest: 'dest/js/bundle.js'
       }
     },
@@ -14,10 +14,14 @@ module.exports = function(grunt) {
         ],
       },
     },
+    zip: {
+      'dest/zip/dest.zip': ['dest/**']
+    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-browserify');
+  grunt.loadNpmTasks('grunt-zip');
 
-  grunt.registerTask('default', ['browserify', 'copy']);
+  grunt.registerTask('default', ['browserify', 'copy', 'zip']);
 };
