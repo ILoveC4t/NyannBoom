@@ -33,7 +33,8 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: nyannboom.zip
+        asset_name: "nyannboom.zip"
+        file: dest/zip/dest.zip
         tag: "latest"
         overwrite: true
         body: "Autmatic Build"
