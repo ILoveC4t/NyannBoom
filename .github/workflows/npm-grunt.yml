@@ -34,6 +34,6 @@ jobs:
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: nyannboom.zip
-        tag: latest
+        tag: "latest"
         overwrite: true
         body: "Autmatic Build"
