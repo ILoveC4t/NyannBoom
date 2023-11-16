@@ -1,4 +1,4 @@
-const {get_object} = require("./objects.js")
+const get_object = require("./objects.js")
 
 const game_bg_img = new Image()
 game_bg_img.src = "assets/game_bg.png"

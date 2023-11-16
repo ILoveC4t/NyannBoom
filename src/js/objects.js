@@ -92,6 +92,4 @@ function get_object(name) {
     return Object.assign({}, Objects[name])
 }
 
-module.exports = {
-    getObject: get_object
-}
+module.exports = get_object
