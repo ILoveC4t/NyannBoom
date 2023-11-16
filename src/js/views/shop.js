@@ -18,4 +18,4 @@ function render(gd) {
     gd.ctx.strokeText("Score: " + Math.floor(score), 10, 40)
 }
 
-module.exports = { render }
+module.exports = { render, bg_img }

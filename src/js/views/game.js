@@ -58,4 +58,4 @@ function render(gd) {
     }
 }
 
-module.exports = { render }
+module.exports = { render, bg_img }
