@@ -27,7 +27,7 @@ jobs:
     - name: Build
       run: |
         npm install
-        grunt
+        grunt --force
         
     - name: Upload release
       uses: svenstaro/upload-release-action@v2
