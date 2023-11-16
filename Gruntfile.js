@@ -14,14 +14,21 @@ module.exports = function(grunt) {
         ],
       },
     },
-    zip: {
-      'dest/zip/dest.zip': ['dest/**', '!dest'],
+    compress: {
+      main: {
+        options: {
+          archive: 'dest.zip'
+        },
+        files: [
+          {expand: true, cwd: 'dest/', src: ['**'], dest: 'zip/'}
+        ]
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-browserify');
-  grunt.loadNpmTasks('grunt-zip');
+  grunt.loadNpmTasks('grunt-contrib-compress');
 
-  grunt.registerTask('default', ['browserify', 'copy', 'zip']);
+  grunt.registerTask('default', ['browserify', 'copy', 'grunt-contrib-compress']);
 };
