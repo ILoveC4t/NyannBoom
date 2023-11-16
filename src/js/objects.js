@@ -45,11 +45,6 @@ const Baddy = {
     img: new Image(),
     src: "assets/baddy.png",
     lastMove: 0,
-    die: function() {
-        wh = this.w * (Boom.w/Baddy.w)
-        spawnBoom(this.x, this.y, wh, wh)
-        add_score(this.score)
-    }
 }
 Baddy.img.src = Baddy.src
 
