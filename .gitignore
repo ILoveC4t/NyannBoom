@@ -129,8 +129,5 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Gruntfile
-dev.Gruntfile.js
-
 # destination directory
 dest

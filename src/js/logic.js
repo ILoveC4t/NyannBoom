@@ -1,3 +1,5 @@
+console.log("logic.js loaded")
+
 const get_object = require("./objects.js")
 
 const shop_view = require("./views/shop.js")
