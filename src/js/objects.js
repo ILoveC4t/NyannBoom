@@ -14,6 +14,7 @@ class Entity {
     flat_dmg = false;
     move_speed = 0;
     move_angle = 0;
+    explodes_on_death = true;
 
     _move_left = Math.PI
     _move_right = 0
@@ -47,26 +48,32 @@ class Entity {
 
     tick() {
         this.move()
+        if (this.health < this.max_health) {
+            this.health += this.regen_rate_ps * this.gd.time_between_ticks()
+        }
     }
 
     die(explodes=true) {
         if (this.dead) return
         if (explodes) {
-            const boom_w = this.w * 1.3
-            const boom_h = this.h * 1.3
-            const boom_x = this.x + this.w/2 - boom_w/2
-            const boom_y = this.y + this.h/2 - boom_h/2
-            const boom = new Boom(this.gd, boom_x, boom_y, boom_w, boom_h)
+            let size = this.w
+            if (this.w < this.h) size = this.h
+            size = size * 1.5
+            const boom_x = this.x + this.w/2 - size/2
+            const boom_y = this.y + this.h/2 - size/2
+            const boom = new Boom(this.gd, size, size, boom_x, boom_y)
+            this.gd.entities["Boom"].push(boom)
         }
         if (this.gd.entities[this.id] == null) return
         const index = this.gd.entities[this.id].indexOf(this)
         if (index > -1) this.gd.entities[this.id].splice(this.gd.entities[this.id].indexOf(this), 1)
+        this.dead = true
     }
 
     _damage(entity, damage) {
         entity.health -= damage
         if (entity.health <= 0) {
-            entity.die()
+            entity.die(entity.explodes_on_death)
         }
     }
 }
@@ -83,12 +90,12 @@ class Ally extends Entity {
             if (this.flat_dmg) {
                 this._damage(enemy, this.dps)
             } else {
-                this._damage(enemy, enemy.dps * this.gd.time_between_ticks())
+                this._damage(enemy, this.dps * this.gd.time_between_ticks())
             }
             if (enemy.flat_dmg) {
                 this._damage(this, enemy.dps)
             } else {
-                this._damage(this, this.dps * this.gd.time_between_ticks())
+                this._damage(this, enemy.dps * enemy.gd.time_between_ticks())
             }
         }
     }
@@ -138,10 +145,12 @@ class Boom extends Entity {
     duration = 1000;
     created = null;
     src = "assets/boom.png";
+    explodes_on_death = false;
 
     constructor(gd, w, h, x, y) {
         super(gd, w, h, x, y)
         this.created = Date.now()
+        this.img.src = this.src
     }
 
     tick() {
@@ -171,16 +180,8 @@ class Player extends Ally {
         this.img.src = this.src
     }
 
-    move(angle) {
+    move() {
         super.move(true)
-    }
-
-    tick() {
-        const collisions = this.check_collisions()
-        for (const enemy of collisions) {
-            this._damage(enemy, this.dps * this.gd.time_between_ticks())
-            this._damage(this, enemy.dps * this.gd.time_between_ticks())
-        }
     }
 
     shoot() {
@@ -192,9 +193,19 @@ class Player extends Ally {
         this.lastShoot = Date.now()
     }
 
+    laser() {
+        this.gd.laser.use()
+    }
+
     die() {
-        super.die()
-        this.gd.game_over()
+        this.gd.game_over_flag = true
+        let size = this.w
+        if (this.w < this.h) size = this.h
+        size = size * 5
+        const boom_x = this.x + this.w/2 - size/2
+        const boom_y = this.y + this.h/2 - size/2
+        const boom = new Boom(this.gd, size, size, boom_x, boom_y)
+        this.gd.entities["Boom"].push(boom)
     }
 }
 
@@ -202,11 +213,12 @@ class Laser extends Ally {
     duration = 3000;
     cooldown = 5000;
     dps = 100;
+    move_angle = -1;
 
-    lastUse = 0;
-    lastShoot = 0;
+    last_shot = 0;
 
     inuse = false;
+    explodes_on_death = false;
 
     src = "assets/Laser.png";
 
@@ -220,9 +232,9 @@ class Laser extends Ally {
             this.inuse = false
         }
         if (!this.inuse) return
-        super.tick()
         this.x = this.gd.player.x + this.gd.player.w + 5
         this.y = this.gd.player.y + this.gd.player.h/2 - this.h/2
+        super.tick()
     }
 
     use() {
@@ -236,6 +248,8 @@ class Bullet extends Ally {
     dps = 50;
     move_speed = 500;
     flat_dmg = true;
+    explodes_on_death = false;
+
     src = "assets/bullet.png";
 
     constructor(gd, w, h, x, y) {
@@ -246,7 +260,7 @@ class Bullet extends Ally {
     tick() {
         super.tick()
         if (this.x + this.w < 0 || this.x > this.gd.canvas.width || this.y + this.h < 0 || this.y > this.gd.canvas.height) {
-            this.die(false)
+            this.die(this.explodes_on_death)
         }
     }
 }

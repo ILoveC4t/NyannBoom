@@ -1,4 +1,4 @@
-const { Boom, Player, Bullet, Laser, Baddy } = require("./objects.js")
+const { Player, Laser, Baddy } = require("./objects.js")
 
 const shop_view = require("./views/shop.js")
 const game_view = require("./views/game.js")
@@ -13,8 +13,8 @@ const gd = {
     maxWidth: null,
     maxHeigth: null,
 
-    player: new Player(this, 50, 50, 0, 0),
-    laser: new Laser(this, 50, 10, 0, 0),
+    player: null,
+    laser: null,
 
     entities: {
         "Baddy": [],
@@ -98,9 +98,15 @@ function game_over_input_handler(e) {
 
 function setup_game() {
     gd.game_over_flag = false
-    gd.score = 0
-    gd.laser = new Laser(gd, 50, 10, 0, 0)
-    gd.player = new Player(gd, 50, 50, 0, 0)
+    gd.score = 1000
+
+    for (let [entity] of Object.entries(gd.entities)) {
+        gd.entities[entity] = []
+    }
+
+    gd.player = new Player(gd, 100, 50, 10, gd.maxWidth/2-50/2)
+    gd.laser = new Laser(gd, 150, 50, 0, 0)
+    draw()
 }
 
 function game_over() {
@@ -111,9 +117,6 @@ function game_over() {
     gd.game_over_flag = true
     document.cookie = gd.hiscore + ";"
     gd.pressed_keys = {}
-    for (let entity of Object.entries(gd.entities)) {
-        gd.entities[entity] = []
-    }
     gd.laser.inuse = false
 }
 
@@ -129,8 +132,6 @@ function spawnBaddy() {
 }
 
 function input_handler() {
-    //angle between 0 and 360, 0 is right, 90 is down, 180 is left, 270 is up, -1 is no movement
-    //calculate the angle using the move_x and move_y
     let move_angle = 0
     
     let move_x = 0
@@ -150,11 +151,8 @@ function input_handler() {
                 move_x += 1
                 break
             case "q":
-                if (gd.laser.inuse == false && gd.score > 100 && gd.laser.created + gd.laser.duration + gd.laser.cooldown < Date.now()) {
-                    gd.laser.created = Date.now()
-                    gd.laser.inuse = true
-                    gd.score -= 100
-                }
+                gd.player.laser()
+                break
             case " ":
                 gd.player.shoot()
                 break
@@ -204,7 +202,7 @@ function logic() {
         gd.last_tick = gd.current_tick
         return
     }
-    if (gd.player.health <= 0) {
+    if (gd.game_over_flag) {
         game_over()
         return
     }
@@ -214,7 +212,7 @@ function logic() {
 
     if (gd.next_baddy < gd.current_tick) {
         spawnBaddy()
-        gd.next_baddy = gd.current_tick + (Math.random() * 1500) + 500
+        gd.next_baddy = gd.current_tick + (Math.random() * 2000-500)+500
     }
 
     gd.player.tick()
@@ -326,7 +324,6 @@ function main() {
     setup_game()
     setup_buttons()
 
-    draw()
     gd.logic_cycle = setInterval(logic, 1000/60)
 }
 window.main = main

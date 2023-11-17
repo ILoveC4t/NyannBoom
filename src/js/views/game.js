@@ -35,7 +35,7 @@ function render(gd) {
     gd.ctx.strokeText("Hiscore: " + gd.hiscore, gd.maxWidth-10, 30)
 
     gd.ctx.textAlign = "left"
-    let cd = gd.laser.created+gd.laser.cooldown+gd.laser.duration-Date.now()
+    let cd = gd.laser.last_shot+gd.laser.cooldown+gd.laser.duration-Date.now()
     let cd_text = "laser CD: "+ Math.ceil(cd/1000) + "s"
     if (cd < 0) cd_text = "laser Ready"
     if (gd.laser.inuse) cd_text = "laser Active"
@@ -43,7 +43,6 @@ function render(gd) {
     gd.ctx.strokeText(cd_text, 10, gd.maxHeigth-10)
 
     if (gd.game_over_flag) {
-        gd.ctx.drawImage(gd.Boom.img,gd.player.x-gd.player.h,gd.player.y-gd.player.w/2,gd.player.w+50,gd.player.w+50)
         gd.ctx.font = "30px Arial"
         gd.ctx.fillStyle = "red"
         gd.ctx.textAlign = "center"
