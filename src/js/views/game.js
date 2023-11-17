@@ -2,10 +2,10 @@ const bg_img = new Image()
 bg_img.src = "assets/game_bg.png"
 
 function render(gd) {
-    if (gd.Laser.inuse) {
-        gd.ctx.drawImage(gd.Laser.img,gd.Laser.x,gd.Laser.y,gd.Laser.w,gd.Laser.h)
+    if (gd.laser.inuse) {
+        gd.ctx.drawImage(gd.laser.img,gd.laser.x,gd.laser.y,gd.laser.w,gd.laser.h)
     }
-    gd.ctx.drawImage(gd.Player.img,gd.Player.x,gd.Player.y,gd.Player.w,gd.Player.h)
+    gd.ctx.drawImage(gd.player.img,gd.player.x,gd.player.y,gd.player.w,gd.player.h)
 
     for (const [entity, entity_arr] of Object.entries(gd.entities)) {
         for (let i = 0; i < entity_arr.length; i++) {
@@ -22,28 +22,28 @@ function render(gd) {
     gd.ctx.fillStyle = "black"
     gd.ctx.fillRect(10, 10, 200, 30)
     gd.ctx.fillStyle = "red"
-    gd.ctx.fillRect(12, 12, 196 * (gd.Player.health/100), 26)
+    gd.ctx.fillRect(12, 12, 196 * (gd.player.health/100), 26)
 
     gd.ctx.font = "20px Arial"
     gd.ctx.fillStyle = "white"
     gd.ctx.textAlign = "center"
-    if (gd.Player.health < 0) gd.Player.health = 0
-    const health_text = Math.ceil(gd.Player.health) + "/" + gd.Player.max_health
+    if (gd.player.health < 0) gd.player.health = 0
+    const health_text = Math.ceil(gd.player.health) + "/" + gd.player.max_health
     gd.ctx.fillText(health_text, 110, 32)
 
     gd.ctx.textAlign = "right"
     gd.ctx.strokeText("Hiscore: " + gd.hiscore, gd.maxWidth-10, 30)
 
     gd.ctx.textAlign = "left"
-    let cd = gd.Laser.created+gd.Laser.cooldown+gd.Laser.duration-Date.now()
-    let cd_text = "Laser CD: "+ Math.ceil(cd/1000) + "s"
-    if (cd < 0) cd_text = "Laser Ready"
-    if (gd.Laser.inuse) cd_text = "Laser Active"
-    if (gd.score < 100) cd_text = "Laser requires 100 score"
+    let cd = gd.laser.created+gd.laser.cooldown+gd.laser.duration-Date.now()
+    let cd_text = "laser CD: "+ Math.ceil(cd/1000) + "s"
+    if (cd < 0) cd_text = "laser Ready"
+    if (gd.laser.inuse) cd_text = "laser Active"
+    if (gd.score < 100) cd_text = "laser requires 100 score"
     gd.ctx.strokeText(cd_text, 10, gd.maxHeigth-10)
 
     if (gd.game_over_flag) {
-        gd.ctx.drawImage(gd.Boom.img,gd.Player.x-gd.Player.h,gd.Player.y-gd.Player.w/2,gd.Player.w+50,gd.Player.w+50)
+        gd.ctx.drawImage(gd.Boom.img,gd.player.x-gd.player.h,gd.player.y-gd.player.w/2,gd.player.w+50,gd.player.w+50)
         gd.ctx.font = "30px Arial"
         gd.ctx.fillStyle = "red"
         gd.ctx.textAlign = "center"

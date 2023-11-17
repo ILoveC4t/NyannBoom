@@ -1,4 +1,4 @@
-const get_object = require("./objects.js")
+const { Boom, Player, Bullet, Laser, Baddy } = require("./objects.js")
 
 const shop_view = require("./views/shop.js")
 const game_view = require("./views/game.js")
@@ -13,21 +13,15 @@ const gd = {
     maxWidth: null,
     maxHeigth: null,
 
-    Player: get_object("Player", this),
-    Laser: get_object("Laser", this),
-    Baddy: get_object("Baddy", this),
-    Bullet: get_object("Bullet", this),
-    Boom: get_object("Boom", this),
-
-    enemies: [
-        "Baddy",
-    ],
+    player: new Player(this, 50, 50, 0, 0),
+    laser: new Laser(this, 50, 10, 0, 0),
 
     entities: {
         "Baddy": [],
         "Bullet": [],
         "Boom": [],
     },
+    enemies: ["Baddy"],
 
     Button: {
         w: 100,
@@ -98,13 +92,15 @@ function mouse_input_handler(e) {
 function game_over_input_handler(e) {
     if (e.key == " ") {
         document.removeEventListener("keydown", game_over_input_handler)
-        gd.game_over_flag = false
-        gd.score = 0
-        gd.Laser = get_object("Laser", gd)
-        gd.Player = get_object("Player", gd)
-        gd.Bullet = get_object("Bullet", gd)
         main()
     }
+}
+
+function setup_game() {
+    gd.game_over_flag = false
+    gd.score = 0
+    gd.laser = new Laser(gd, 50, 10, 0, 0)
+    gd.player = new Player(gd, 50, 50, 0, 0)
 }
 
 function game_over() {
@@ -118,68 +114,59 @@ function game_over() {
     for (let entity of Object.entries(gd.entities)) {
         gd.entities[entity] = []
     }
-    gd.Laser.inuse = false
+    gd.laser.inuse = false
 }
 
 function spawnBaddy() {
-    const baddy = get_object("Baddy", gd)
+    const baddy = new Baddy(gd, 50, 50, 0, 0)
     baddy.w = baddy.w * ((Math.random())+0.8)
     baddy.h = baddy.w
     baddy.x = gd.maxWidth - baddy.w
     baddy.y = Math.floor(Math.random() * (gd.maxHeigth - baddy.h))
     baddy.move_speed = baddy.move_speed * ((Math.random())+0.5)
+
     gd.entities["Baddy"].push(baddy)
 }
 
-function spawnBoom(x,y,w,h) {
-    boom = get_object("Boom", gd)
-    boom.x = x
-    boom.y = y
-    boom.w = w
-    boom.h = h
-    boom.created = Date.now()
-    gd.entities["Boom"].push(boom)
-}
-
-function check_collision(entity1, entity2) {
-    if (entity1.x < entity2.x + entity2.w && entity1.x + entity1.w > entity2.x && entity1.y < entity2.y + entity2.h && entity1.y + entity1.h > entity2.y) {
-        return true
-    }
-    return false
-}
-
 function input_handler() {
-    const move_size = gd.Player.move_speed * (gd.time_between_ticks())
+    //angle between 0 and 360, 0 is right, 90 is down, 180 is left, 270 is up, -1 is no movement
+    //calculate the angle using the move_x and move_y
+    let move_angle = 0
+    
+    let move_x = 0
+    let move_y = 0
     for (const key in gd.pressed_keys) {
         switch (key) {
             case "w":
-                if (gd.Player.y - move_size < 0) break
-                gd.Player.y -= move_size
+                move_y -= 1
                 break
             case "s":
-                if (gd.Player.y + gd.Player.h + move_size > gd.maxHeigth) break
-                gd.Player.y += move_size
+                move_y += 1
                 break
             case "a":
-                if (gd.Player.x - move_size < 0) break
-                gd.Player.x -= move_size
+                move_x -= 1
                 break
             case "d":
-                if (gd.Player.x + gd.Player.w + move_size > Math.floor(gd.maxWidth/5*4)) break
-                gd.Player.x += move_size
+                move_x += 1
                 break
             case "q":
-                if (gd.Laser.inuse == false && gd.score > 100 && gd.Laser.created + gd.Laser.duration + gd.Laser.cooldown < Date.now()) {
-                    gd.Laser.created = Date.now()
-                    gd.Laser.inuse = true
+                if (gd.laser.inuse == false && gd.score > 100 && gd.laser.created + gd.laser.duration + gd.laser.cooldown < Date.now()) {
+                    gd.laser.created = Date.now()
+                    gd.laser.inuse = true
                     gd.score -= 100
                 }
             case " ":
-                gd.Player.shoot()
+                gd.player.shoot()
                 break
         }
     }
-    gd.Player.lastMove = Date.now()
+    if (move_x == 0 && move_y == 0) {
+        move_angle = -1
+    } else {
+        move_angle = Math.atan2(move_y, move_x) * 180 / Math.PI
+    }
+    gd.player.move_angle = move_angle
+    gd.player.move()
 }
 
 function draw() {
@@ -210,10 +197,6 @@ function draw() {
     requestAnimationFrame(draw)
 }
 
-function add_score(amount) {
-    gd.score += Math.floor(amount*gd.Player.score_multiplier)
-}
-
 function logic() {
     gd.current_tick = Date.now()
 
@@ -221,7 +204,7 @@ function logic() {
         gd.last_tick = gd.current_tick
         return
     }
-    if (gd.Player.health <= 0) {
+    if (gd.player.health <= 0) {
         game_over()
         return
     }
@@ -229,97 +212,21 @@ function logic() {
 
     input_handler()
 
-    //Player regen
-    if (gd.Player.health < gd.Player.max_health) {
-        gd.Player.health += gd.Player.regen_rate_ps * (gd.time_between_ticks())
-        if (gd.Player.health > gd.Player.max_health) gd.Player.health = gd.Player.max_health
-    }
-
-    if (gd.Laser.inuse) {
-        gd.Laser.x = gd.Player.x + gd.Player.w + 10
-        gd.Laser.y = gd.Player.y + gd.Player.h / 2 - gd.Laser.h /2
-        if (gd.Laser.created + gd.Laser.duration < Date.now()) {
-            gd.Laser.inuse = false
-        }
-        const collisions = gd.Laser.check_collisions()
-
-        /*
-        for (let i = 0; i < gd.entities["Baddy"].length; i++) {
-            const baddy = gd.entities["Baddy"][i]
-            //Laser collision
-            if (check_collision(baddy, gd.Laser)) {
-                baddy.lives -= gd.Laser.dps * (time_between_ticks())
-                if (baddy.lives <= 0) {
-                    wh = baddy.w * (gd.Boom.w/gd.Baddy.w)
-                    spawnBoom(baddy.x, baddy.y, wh, wh)
-                    add_score(baddy.score)
-                    gd.entities["Baddy"].splice(i,1)
-                    i--
-                }
-            }
-        }*/
-    }
-    for (let i = 0; i < gd.entities["Bullet"].length; i++) {
-        const bullet = gd.entities["Bullet"][i]
-        bullet.x += 5
-        if (bullet.x > gd.maxWidth) {
-            gd.entities["Bullet"].splice(i,1)
-            i--
-        }
-        for (let j = 0; j < gd.entities["Baddy"].length; j++) {
-            const baddy = gd.entities["Baddy"][j]
-            //Bullet collision
-            if (check_collision(baddy, bullet)) {
-                gd.entities["Bullet"].splice(i,1)
-                i--
-                baddy.lives -= bullet.dps
-                if (baddy.lives <= 0) {
-                    wh = baddy.w * (gd.Boom.w/gd.Baddy.w)
-                    spawnBoom(baddy.x, baddy.y, wh, wh)
-                    add_score(baddy.score)
-                    gd.entities["Baddy"].splice(j,1)
-                    j--
-                }
-            }
-        }
-    }
-
-    for (let i = 0; i < gd.entities["Baddy"].length; i++) {
-        const baddy = gd.entities["Baddy"][i]
-        //Movement
-        baddy.x -= baddy.move_speed * (gd.time_between_ticks())
-        //Offscreen check
-        if (baddy.x + baddy.w < 0) {
-            gd.entities["Baddy"].splice(i,1)
-            i--
-        }
-        //Player collision
-        if (check_collision(baddy, gd.Player)) {
-            gd.Player.health -= baddy.dps * (gd.time_between_ticks())
-            baddy.lives -= gd.Player.dps * (gd.time_between_ticks())
-            if (baddy.lives <= 0) {
-                wh = baddy.w * (gd.Boom.w/gd.Baddy.w)
-                    spawnBoom(baddy.x, baddy.y, wh, wh)
-                    add_score(baddy.score)
-                gd.entities["Baddy"].splice(i,1)
-                i--
-            }
-        }
-    }
-
-    for (let i = 0; i < gd.entities["Boom"].length; i++) {
-        const boom = gd.entities["Boom"][i]
-        if (boom.created + 1000 < Date.now()) {
-            gd.entities["Boom"].splice(i,1)
-            i--
-        }
-    }
-
-    if (gd.last_baddy + gd.next_baddy < Date.now()) {
+    if (gd.next_baddy < gd.current_tick) {
         spawnBaddy()
-        gd.last_baddy = Date.now()
-        gd.next_baddy = Math.floor(Math.random() * 2000-500-gd.score*3) + 500
+        gd.next_baddy = gd.current_tick + (Math.random() * 1500) + 500
     }
+
+    gd.player.tick()
+    gd.laser.tick()
+
+    for (let [entity, entity_arr] of Object.entries(gd.entities)) {
+        for (let i = 0; i < entity_arr.length; i++) {
+            entity_arr[i].tick()
+        }
+    }
+
+
     gd.last_tick = gd.current_tick
 }
 
@@ -348,43 +255,15 @@ function exit_shop_callback() {
 }
 
 const shop_buttons = {
-    "Health": gd.Player.max_health+"HP",
-    "Regen": (Math.floor(gd.Player.regen_rate_ps * 100) / 100)+"HP/s",
-    "Bullet DMG": Math.floor(gd.Bullet.dps)+"DMG",
-    "Speed": (Math.floor(gd.Player.move_speed * 100) / 100)+"px/s",
-    "Laser Duration": (Math.floor(gd.Laser.duration*100)/100/1000)+"s",
-    "Score Multiplier": (Math.floor(gd.Player.score_multiplier * 100) / 100),
+    "Health": "Placeholder",
+    "Regen": "Placeholder",
+    "Bullet DMG": "Placeholder",
+    "Speed": "Placeholder",
+    "Laser Duration": "Placeholder",
+    "Score Multiplier": "Placeholder",
 }
 function generic_stat_boost_callback() {
-    if (gd.score < gd.Player.upgrade_cost) return
-    switch(this.text) {
-        case "Health":
-            gd.Player.max_health *= 1.01
-            this.sub_text = Math.floor(gd.Player.max_health)+"HP"
-            break
-        case "Regen":
-            gd.Player.regen_rate_ps *= 1.01
-            this.sub_text = (Math.floor(gd.Player.regen_rate_ps * 100) / 100)+"HP/s"
-            break
-        case "Bullet DMG":
-            gd.Bullet.dps *= 1.01
-            this.sub_text = Math.floor(gd.Bullet.dps)+"DMG"
-            break
-        case "Speed":
-            gd.Player.move_speed *= 1.01
-            this.sub_text = (Math.floor(gd.Player.move_speed * 100) / 100)+"px/s"
-            break
-        case "Laser Duration":
-            gd.Laser.duration *= 1.01
-            this.sub_text = (Math.floor(gd.Laser.duration/1000*100)/100)+"s"
-            break
-        case "Score Multiplier":
-            gd.Player.score_multiplier *= 1.01
-            this.sub_text = (Math.floor(gd.Player.score_multiplier * 100) / 100)
-            break
-    }
-    gd.score -= gd.Player.upgrade_cost
-    gd.Player.upgrade_cost = Math.ceil(gd.Player.upgrade_cost * 1.1)
+
 }
 
 function setup_buttons() {
@@ -444,6 +323,7 @@ function main() {
     gd.maxWidth = gd.ctx.canvas.width
     gd.maxHeigth = gd.ctx.canvas.height
 
+    setup_game()
     setup_buttons()
 
     draw()

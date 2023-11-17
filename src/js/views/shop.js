@@ -9,7 +9,7 @@ function render(gd) {
     gd.ctx.fillText("Shop", gd.maxWidth/2, 50)
     gd.ctx.strokeText("Shop", gd.maxWidth/2, 50)
     gd.ctx.font = "20px Arial"
-    gd.ctx.fillText("All Upgrades cost "+ gd.Player.upgrade_cost +" Score", gd.maxWidth/2, 80)
+    gd.ctx.fillText("All Upgrades cost "+ gd.player.upgrade_cost +" Score", gd.maxWidth/2, 80)
     gd.ctx.fillText("All Upgrades add +1%", gd.maxWidth/2, 100)
 
     gd.ctx.textAlign = "left"
