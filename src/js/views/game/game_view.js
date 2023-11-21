@@ -24,9 +24,6 @@ class GameView extends View {
         for (const [entity, entity_arr] of Object.entries(this.gd.entities)) {
             for (let i = 0; i < entity_arr.length; i++) {
                 const ent = entity_arr[i]
-                if (entity == "Boom") {
-                    console.log(ent)
-                }
                 this.gd.ctx.drawImage(ent.img,ent.x,ent.y,ent.w,ent.h)
             }
         }

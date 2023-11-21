@@ -7,8 +7,10 @@ const ShopView = require("./views/shop/shop_view.js")
 const gd = {
     canvas: null,
     ctx: null,
-    maxWidth: null,
-    maxHeight: null,
+    maxWidth: 720,
+    maxHeight: 480,
+    aspect_ratio: 720/480,
+    scale: 1,
 
     player: null,
     laser: null,
@@ -134,4 +136,5 @@ function main() {
     gd.setup()
     gd.logic_cycle = setInterval(logic, 1000/60)
 }
+
 window.main = main
