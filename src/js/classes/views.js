@@ -28,9 +28,9 @@ class View {
     }
 
     draw() {
-        this.gd.ctx.clearRect(0,0,this.gd.maxWidth,this.gd.maxHeigth)
+        this.gd.ctx.clearRect(0,0,this.gd.maxWidth,this.gd.maxHeight)
         const ratio = this.bg_img.width/this.bg_img.height
-        this.gd.ctx.drawImage(this.bg_img,0,0,this.gd.maxHeigth*ratio,this.gd.maxHeigth)
+        this.gd.ctx.drawImage(this.bg_img,0,0,this.gd.maxHeight*ratio,this.gd.maxHeight)
     }
 
     _draw_buttons() {

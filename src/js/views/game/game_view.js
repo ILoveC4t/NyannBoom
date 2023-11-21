@@ -10,7 +10,7 @@ class GameView extends View {
 
         const enter_shop_btn = new ShopButton(gd, this.gd.maxWidth, this.gd.maxHeight)
         enter_shop_btn.x = this.gd.maxWidth-enter_shop_btn.w-10
-        enter_shop_btn.y = this.gd.maxHeigth-enter_shop_btn.h-10
+        enter_shop_btn.y = this.gd.maxHeight-enter_shop_btn.h-10
         this.buttons.push(enter_shop_btn)
     }
 
@@ -24,6 +24,9 @@ class GameView extends View {
         for (const [entity, entity_arr] of Object.entries(this.gd.entities)) {
             for (let i = 0; i < entity_arr.length; i++) {
                 const ent = entity_arr[i]
+                if (entity == "Boom") {
+                    console.log(ent)
+                }
                 this.gd.ctx.drawImage(ent.img,ent.x,ent.y,ent.w,ent.h)
             }
         }
@@ -54,19 +57,19 @@ class GameView extends View {
         if (cd < 0) cd_text = "laser Ready"
         if (this.gd.laser.inuse) cd_text = "laser Active"
         if (this.gd.score < 100) cd_text = "laser requires 100 score"
-        this.gd.ctx.strokeText(cd_text, 10, this.gd.maxHeigth-10)
+        this.gd.ctx.strokeText(cd_text, 10, this.gd.maxHeight-10)
 
         if (this.gd.game_over_flag) {
             this.gd.ctx.font = "30px Arial"
             this.gd.ctx.fillStyle = "red"
             this.gd.ctx.textAlign = "center"
-            this.gd.ctx.strokeText("Game Over", this.gd.maxWidth/2, this.gd.maxHeigth/2)
-            this.gd.ctx.fillText("Game Over", this.gd.maxWidth/2, this.gd.maxHeigth/2)
+            this.gd.ctx.strokeText("Game Over", this.gd.maxWidth/2, this.gd.maxHeight/2)
+            this.gd.ctx.fillText("Game Over", this.gd.maxWidth/2, this.gd.maxHeight/2)
 
             this.gd.ctx.font = "20px Arial"
             this.gd.ctx.fillStyle = "black"
             this.gd.ctx.textAlign = "center"
-            this.gd.ctx.fillText("Press space to restart", this.gd.maxWidth/2, this.gd.maxHeigth/2 + 30)
+            this.gd.ctx.fillText("Press space to restart", this.gd.maxWidth/2, this.gd.maxHeight/2 + 30)
             return
         }
 

@@ -10,7 +10,7 @@ class ShopView extends View {
 
         const exit_btn = new ExitButton(gd)
         exit_btn.x = this.gd.maxWidth - exit_btn.w - 10
-        exit_btn.y = this.gd.maxHeigth - exit_btn.h - 10
+        exit_btn.y = this.gd.maxHeight - exit_btn.h - 10
         this.buttons.push(exit_btn)
     }
 
