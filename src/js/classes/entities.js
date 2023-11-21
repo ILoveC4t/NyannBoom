@@ -192,7 +192,6 @@ class Player extends Ally {
         const bullet = new Bullet(this.gd, 20, 20, 0, 0)
         bullet.x = this.x + this.w + 5
         bullet.y = this.y + this.h/2 - bullet.h/2
-        console.log(bullet)
         this.gd.entities["Bullet"].push(bullet)
         this.lastShoot = Date.now()
     }
