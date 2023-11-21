@@ -23,12 +23,14 @@ class Entity {
 
     dead = false;
     
-    constructor(gd, w, h, x, y, src) {
+    constructor(gd, w, h, x, y) {
         this.gd = gd
-        this.w = w
-        this.h = h
-        this.x = x
-        this.y = y
+        if (w) this.w = w
+        if (h) this.h = h
+        if (x) this.x = x
+        if (y) this.y = y
+
+        this.spawn_time = Date.now()
 
         this.img = new Image()
     }
@@ -102,8 +104,8 @@ class Ally extends Entity {
 
     check_collisions() {
         const collisions = []
-        for (let i = 0; i < this.gd.enemies.length; i++) {
-            const obj_name = this.gd.enemies[i]
+        for (const [obj_name, obj] of Object.entries(this.gd.entities)) {
+            if (this.gd.enemies[obj_name] == null) continue
             for (const enemy of this.gd.entities[obj_name]) {
                 if (this._check_collision(this, enemy)) {
                     collisions.push(enemy)
@@ -124,8 +126,8 @@ class Ally extends Entity {
 class Enemy extends Entity {
     score_pts = 0;
 
-    constructor(gd, w, h, x, y) {
-        super(gd, w, h, x, y)
+    constructor(gd) {
+        super(gd)
     }
 
     tick() {
@@ -146,6 +148,7 @@ class Boom extends Entity {
     created = null;
     src = "assets/boom.png";
     explodes_on_death = false;
+    health = 100000000
 
     constructor(gd, w, h, x, y) {
         super(gd, w, h, x, y)
@@ -189,6 +192,7 @@ class Player extends Ally {
         const bullet = new Bullet(this.gd, 20, 20, 0, 0)
         bullet.x = this.x + this.w + 5
         bullet.y = this.y + this.h/2 - bullet.h/2
+        console.log(bullet)
         this.gd.entities["Bullet"].push(bullet)
         this.lastShoot = Date.now()
     }
@@ -249,6 +253,7 @@ class Bullet extends Ally {
     move_speed = 500;
     flat_dmg = true;
     explodes_on_death = false;
+    health = 1
 
     src = "assets/bullet.png";
 
@@ -273,16 +278,60 @@ class Baddy extends Enemy {
     move_speed = 100;
     src = "assets/baddy.png";
 
+    w = 50;
+    h = 50;
+
     lastMove = 0;
 
-    constructor(gd, w, h, x, y) {
-        super(gd, w, h, x, y)
+    constructor(gd) {
+        super(gd)
         this.img.src = this.src
     }
 
     tick() {
         if (Date.now() - this.lastMove > 1000) {
-            this.move_angle = (Math.random() * (190-170)) + 170
+            this.move_angle = (Math.random() * 10) + 170
+            this.lastMove = Date.now()
+        }
+        super.tick()
+    }
+}
+
+class HomingBaddy extends Enemy {
+    score_pts = 20;
+    max_health = 20;
+    health = 20;
+    dps = 100;
+    move_speed = 200;
+    src = "assets/homing_baddy.png";
+
+    move_angle = 180;
+
+    w = 30;
+    h = 30;
+
+    lastMove = 0;
+
+    constructor(gd) {
+        super(gd)
+        this.img.src = this.src
+    }
+
+    tick() {
+        if (Date.now() - this.lastMove > 100) {
+            const player_y = this.gd.player.y + this.gd.player.h/2
+            const player_x = this.gd.player.x + this.gd.player.w/2 - 1
+
+            const me_y = this.y + this.h/2
+            const me_x = this.x + this.w/2
+
+            if (me_x < player_x  || this.spawn_time + 1500 < Date.now()) {
+                super.tick()
+                return
+            }
+
+            const radians = Math.atan2(player_y - me_y, player_x - me_x)
+            this.move_angle = radians * 180 / Math.PI
             this.lastMove = Date.now()
         }
         super.tick()
@@ -295,4 +344,5 @@ module.exports = {
     Bullet,
     Laser,
     Baddy,
+    HomingBaddy
 }

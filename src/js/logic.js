@@ -1,4 +1,5 @@
-const { Player, Laser, Baddy } = require("./classes/entities.js")
+const { Player, Laser, Baddy, HomingBaddy } = require("./classes/entities.js")
+const WaveHandler = require("./classes/wave.js")
 const InputHandler = require("./classes/input.js")
 const GameView = require("./views/game/game_view.js")
 const ShopView = require("./views/shop/shop_view.js")
@@ -7,17 +8,20 @@ const gd = {
     canvas: null,
     ctx: null,
     maxWidth: null,
-    maxHeigth: null,
+    maxHeight: null,
 
     player: null,
     laser: null,
+    wave_handler: null,
 
     entities: {
-        "Baddy": [],
         "Bullet": [],
         "Boom": [],
     },
-    enemies: ["Baddy"],
+    enemies: {
+        "Baddy": Baddy,
+        "HomingBaddy": HomingBaddy
+    },
 
     view: "game",
     views: {
@@ -44,14 +48,20 @@ const gd = {
     setup() {
         this.input_handler.register()
         this.game_over_flag = false
-        this.score = 1000
+        this.score = 0
     
+        for (let [entity] of Object.entries(this.enemies)) {
+            this.entities[entity] = []
+        }
+
         for (let [entity] of Object.entries(this.entities)) {
             this.entities[entity] = []
         }
     
         this.player = new Player(gd, 100, 50, 10, this.maxWidth/2-50/2)
         this.laser = new Laser(gd, 150, 50, 0, 0)
+
+        this.wave_handler = new WaveHandler(gd)
         draw()
     },
     restart() {
@@ -77,17 +87,6 @@ if (cookies) {
     if (cookies[0]) gd.hiscore = cookies[0]
 }
 
-function spawnBaddy() {
-    const baddy = new Baddy(gd, 50, 50, 0, 0)
-    baddy.w = baddy.w * ((Math.random())+0.8)
-    baddy.h = baddy.w
-    baddy.x = gd.maxWidth - baddy.w
-    baddy.y = Math.floor(Math.random() * (gd.maxHeigth - baddy.h))
-    baddy.move_speed = baddy.move_speed * ((Math.random())+0.5)
-
-    gd.entities["Baddy"].push(baddy)
-}
-
 function draw() {
     gd.views[gd.view].draw(gd)
     requestAnimationFrame(draw)
@@ -108,11 +107,7 @@ function logic() {
 
     gd.input_handler.check()
 
-    if (gd.next_baddy < gd.current_tick) {
-        spawnBaddy()
-        gd.next_baddy = gd.current_tick + (Math.random() * 2000-500)+500
-    }
-
+    gd.wave_handler.tick()
     gd.player.tick()
     gd.laser.tick()
 
@@ -122,7 +117,6 @@ function logic() {
         }
     }
 
-
     gd.last_tick = gd.current_tick
 }
 
@@ -130,7 +124,7 @@ function main() {
     gd.canvas = document.getElementById("game")
     gd.ctx = gd.canvas.getContext("2d")
     gd.maxWidth = gd.ctx.canvas.width
-    gd.maxHeigth = gd.ctx.canvas.height
+    gd.maxHeight = gd.ctx.canvas.height
 
     for ([view_name, view] of Object.entries(gd.views)) {
         gd.views[view_name] = new gd.views[view_name](gd)
