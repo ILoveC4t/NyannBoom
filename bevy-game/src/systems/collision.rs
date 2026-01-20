@@ -9,10 +9,10 @@ pub fn collision_detection_system(
     mut enemy_query: Query<(Entity, &Transform, &Sprite, &Enemy, &mut Health, Option<&Damage>), With<EnemyTag>>,
     time: Res<Time>,
 ) {
-    for (ally_entity, ally_transform, ally_sprite, _, ally_damage) in ally_query.iter() {
+    for (_ally_entity, ally_transform, ally_sprite, _, ally_damage) in ally_query.iter() {
         let ally_size = ally_sprite.custom_size.unwrap_or(Vec2::new(50.0, 50.0));
         
-        for (enemy_entity, enemy_transform, enemy_sprite, enemy, mut enemy_health, enemy_damage) in enemy_query.iter_mut() {
+        for (enemy_entity, enemy_transform, enemy_sprite, enemy, mut enemy_health, _enemy_damage) in enemy_query.iter_mut() {
             let enemy_size = enemy_sprite.custom_size.unwrap_or(Vec2::new(50.0, 50.0));
             
             // Check collision using AABB

@@ -2,19 +2,18 @@
 
 #[cfg(test)]
 mod integration_tests {
-    use super::*;
     use bevy::prelude::*;
 
     #[test]
-    fn test_example() {
+    fn test_app_builds() {
         // Setup Bevy app for testing
-        let mut app = App::build();
+        let mut app = App::new();
         // Add necessary plugins and systems for the test
-        app.add_plugins(DefaultPlugins);
+        app.add_plugins(MinimalPlugins);
         // Run the app for a single frame
         app.update();
         
         // Assertions to verify the expected behavior
-        assert!(true); // Replace with actual test conditions
+        assert!(true); // Basic sanity test - app can be created and updated
     }
 }

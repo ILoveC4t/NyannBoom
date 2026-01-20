@@ -4,7 +4,7 @@ use crate::components::*;
 pub fn player_input_system(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<&mut Velocity, With<Player>>,
-    time: Res<Time>,
+    _time: Res<Time>,
 ) {
     for mut velocity in query.iter_mut() {
         let mut x = 0.0;

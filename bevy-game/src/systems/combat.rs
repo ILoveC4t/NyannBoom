@@ -52,14 +52,14 @@ fn spawn_bullet(commands: &mut Commands, player_transform: &Transform) {
 }
 
 pub fn laser_system(
-    mut commands: Commands,
+    _commands: Commands,
     keyboard_input: Res<Input<KeyCode>>,
     mut laser_query: Query<(Entity, &mut Laser, &mut Transform, &mut Visibility)>,
     player_query: Query<&Transform, (With<Player>, Without<Laser>)>,
     time: Res<Time>,
 ) {
     if let Ok(player_transform) = player_query.get_single() {
-        for (entity, mut laser, mut laser_transform, mut visibility) in laser_query.iter_mut() {
+        for (_entity, mut laser, mut laser_transform, mut visibility) in laser_query.iter_mut() {
             // Check if laser should be active
             if time.elapsed_seconds() - laser.last_use > laser.duration {
                 laser.in_use = false;
