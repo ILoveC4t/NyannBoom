@@ -1,14 +1,22 @@
-// This file is the entry point of the application. It initializes the Bevy app, sets up the main game loop, and adds plugins and systems.
+mod components;
+mod resources;
+mod systems;
+mod states;
+mod plugins;
 
 use bevy::prelude::*;
+use plugins::GamePlugin;
 
 fn main() {
-    App::build()
-        .add_plugins(DefaultPlugins)
-        .add_startup_system(setup.system())
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "NyannBoom - Rust Port".to_string(),
+                resolution: (800.0, 600.0).into(),
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_plugin(GamePlugin)
         .run();
-}
-
-fn setup(commands: &mut Commands) {
-    // Setup code goes here
 }
