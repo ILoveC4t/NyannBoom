@@ -1,7 +1,8 @@
-mod menu;
-mod playing;
-mod paused;
+use bevy::prelude::*;
 
-pub use menu::MenuState;
-pub use playing::PlayingState;
-pub use paused::PausedState;
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum AppState {
+    #[default]
+    Playing,
+    GameOver,
+}
